@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, MedievalSharp } from "next/font/google";
 import { NextAuthProvider } from "./providers";
+import Navbar from "@/components/navbar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -8,8 +9,9 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const medievalSharp = MedievalSharp({
+  weight: "400",
+  variable: "--font-medievalsharp",
   subsets: ["latin"],
 });
 
@@ -26,10 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${medievalSharp.variable} antialiased`}
         suppressHydrationWarning
       >
-        <NextAuthProvider>{children}</NextAuthProvider>
+        <NextAuthProvider>
+          <Navbar />
+          <main className="mt-16">{children}</main>
+        </NextAuthProvider>
       </body>
     </html>
   );

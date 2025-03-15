@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
+import Button from "@/components/ui/button";
 
 type AuthMode = "login" | "register";
 
@@ -116,29 +117,21 @@ export default function Auth() {
           </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:bg-gray-400"
-            >
-              {loading
-                ? "Processing..."
-                : mode === "login"
-                ? "Login"
-                : "Register"}
-            </button>
+            <Button type="submit" isLoading={loading} fullWidth size="lg">
+              {mode === "login" ? "Login" : "Register"}
+            </Button>
           </div>
 
           <div className="text-center text-sm">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setMode(mode === "login" ? "register" : "login")}
-              className="text-blue-600 hover:underline"
             >
               {mode === "login"
                 ? "Don't have an account? Register"
                 : "Already have an account? Sign in"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
