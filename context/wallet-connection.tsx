@@ -96,6 +96,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         const signer = await newProvider.getSigner();
         const address = await signer.getAddress();
 
+        // Save wallet address to database
+        const response = await fetch("/api/user/wallet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ walletAddress: address }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to save wallet address");
+        }
+
         setProvider(newProvider);
         setSigner(signer);
         setWalletAddress(address);
@@ -103,13 +116,26 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Error connecting wallet:", error);
-      setError("Failed to connect wallet");
+      setError(
+        error instanceof Error ? error.message : "Failed to connect wallet"
+      );
     } finally {
       setIsConnecting(false);
     }
   };
 
-  const disconnectWallet = useCallback(() => {
+  const disconnectWallet = useCallback(async () => {
+    try {
+      // Clear wallet address from database
+      await fetch("/api/user/wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress: null }),
+      });
+    } catch (error) {
+      console.error("Error disconnecting wallet:", error);
+    }
+
     setWalletAddress(undefined);
     setProvider(undefined);
     setSigner(undefined);

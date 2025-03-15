@@ -33,7 +33,7 @@ export default function Navbar() {
       await signOut({ redirect: false });
       router.push("/");
     } else {
-      router.push("/login");
+      router.push("/");
     }
   };
 
@@ -69,7 +69,7 @@ export default function Navbar() {
                   {item.label}
                 </Link>
               ))}
-              <WalletButton />
+              {session && <WalletButton />}
               <Button
                 onClick={handleAuthAction}
                 isLoading={status === "loading"}
@@ -137,11 +137,20 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <div className="px-3 py-2">
-              <WalletButton />
-            </div>
+
+            {session && (
+              <>
+                <div className="px-3 py-2">
+                  <WalletButton />
+                </div>
+              </>
+            )}
+
             <Button
-              onClick={handleAuthAction}
+              onClick={() => {
+                handleAuthAction();
+                setIsMenuOpen(false);
+              }}
               variant="ghost"
               isLoading={status === "loading"}
               fullWidth
