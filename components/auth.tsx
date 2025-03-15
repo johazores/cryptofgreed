@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 
 type AuthMode = "login" | "register";
 
@@ -11,6 +11,16 @@ export default function Auth() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null; // or a loading spinner
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,7 +33,6 @@ export default function Auth() {
 
     try {
       if (mode === "register") {
-        // Register new user
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -35,7 +44,6 @@ export default function Auth() {
           throw new Error(error || "Failed to register");
         }
 
-        // Automatically login after successful registration
         await signIn("credentials", {
           email,
           password,
@@ -44,7 +52,6 @@ export default function Auth() {
 
         router.push("/dashboard");
       } else {
-        // Login existing user
         const response = await signIn("credentials", {
           email,
           password,
@@ -69,9 +76,7 @@ export default function Auth() {
       <div className="w-full max-w-md space-y-8 rounded-lg p-6 shadow-lg">
         <div>
           <h2 className="text-center text-3xl font-bold">
-            {mode === "login"
-              ? "Sign in to your account"
-              : "Create new account"}
+            {mode === "login" ? "Login to your account" : "Create new account"}
           </h2>
         </div>
 
@@ -119,7 +124,7 @@ export default function Auth() {
               {loading
                 ? "Processing..."
                 : mode === "login"
-                ? "Sign in"
+                ? "Login"
                 : "Register"}
             </button>
           </div>

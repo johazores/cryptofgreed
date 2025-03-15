@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcrypt";
+import { prisma } from "@/lib/prisma";
 
 const handler = NextAuth({
   providers: [
@@ -15,22 +16,20 @@ const handler = NextAuth({
           return null;
         }
 
-        // Here you would typically:
-        // 1. Check if user exists in your database
-        // 2. Verify password hash
-        // This is a simple example - replace with your actual auth logic
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        });
 
-        const user = {
-          id: "1",
-          email: "user@example.com",
-          name: "Test User",
-          // In production, you'd fetch this from your DB
-          password: "$2b$10$test", // Example hashed password
-        };
+        if (!user) {
+          return null;
+        }
 
-        const isValid = await compare(credentials.password, user.password);
+        const isPasswordValid = await compare(
+          credentials.password,
+          user.password
+        );
 
-        if (!isValid) {
+        if (!isPasswordValid) {
           return null;
         }
 
@@ -47,6 +46,14 @@ const handler = NextAuth({
   },
   pages: {
     signIn: "/login",
+  },
+  callbacks: {
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub!;
+      }
+      return session;
+    },
   },
 });
 
