@@ -89,9 +89,7 @@ export default function WalletButton() {
         {isConnecting
           ? "Connecting..."
           : walletAddress
-          ? `${formatAddress(walletAddress)} (${Number(balance).toFixed(
-              4
-            )} CORE)`
+          ? `${formatAddress(walletAddress)}`
           : "Connect Wallet"}
       </Button>
 
