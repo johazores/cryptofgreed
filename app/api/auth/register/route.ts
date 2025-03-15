@@ -1,6 +1,7 @@
 import { hash } from "bcrypt";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { WalletService } from "@/lib/wallet";
 
 export async function POST(req: Request) {
   try {
@@ -33,14 +34,21 @@ export async function POST(req: Request) {
       return new NextResponse("User already exists", { status: 400 });
     }
 
+    // Generate custodial wallet
+    const walletService = new WalletService();
+    const { address, encryptedPrivateKey } =
+      await walletService.generateCustodialWallet();
+
     // Hash password
     const hashedPassword = await hash(password, 10);
 
-    // Create user
+    // Create user with custodial wallet
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
+        custodialWalletAddress: address,
+        encryptedPrivateKey,
       },
     });
 
@@ -49,6 +57,7 @@ export async function POST(req: Request) {
       user: {
         id: user.id,
         email: user.email,
+        custodialWalletAddress: address,
       },
     });
   } catch (error) {
