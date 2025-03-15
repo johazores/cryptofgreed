@@ -4,6 +4,7 @@ import { Enemy, EnemyManager } from "@/lib/game/enemy";
 import { useState, useEffect } from "react";
 import { CombatManager } from "@/lib/game/combat-manager";
 import GameModal from "./modal";
+import CharacterStats from "./character-stats";
 
 interface CombatProps {
   character: Character;
@@ -19,6 +20,21 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
   const [showVictory, setShowVictory] = useState(false);
   const [showDefeat, setShowDefeat] = useState(false);
   const [rewards, setRewards] = useState({ gold: 0, experience: 0 });
+  const [userCrystals, setUserCrystals] = useState(0);
+
+  // Fetch user crystals on component mount
+  useEffect(() => {
+    const fetchUserCrystals = async () => {
+      try {
+        const response = await fetch("/api/user/crystals");
+        const data = await response.json();
+        setUserCrystals(data.crystals);
+      } catch (error) {
+        console.error("Failed to fetch user crystals:", error);
+      }
+    };
+    fetchUserCrystals();
+  }, []);
 
   const handleCombatVictory = async () => {
     // Calculate rewards based on floor level and enemies defeated
@@ -84,6 +100,47 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
       setShowDefeat(true);
     } catch (error) {
       console.error("Failed to update character death status:", error);
+    }
+  };
+
+  const handleRevive = async () => {
+    try {
+      const response = await fetch("/api/characters/revive", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          characterId: character.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to revive character");
+      }
+
+      // Reset game state
+      const enhancedCharacter = {
+        ...character,
+        currentHealth: character.maxHealth,
+        isDead: false,
+      };
+
+      const gameManager = new GameManager(enhancedCharacter);
+      const initialGameState = gameManager.getState();
+
+      // Create a new enemy for the current floor
+      const enemy = EnemyManager.createEnemy(initialGameState.floor);
+
+      // Initialize combat manager
+      const combat = new CombatManager(initialGameState, [enemy]);
+
+      setGameState(initialGameState);
+      setEnemies([enemy]);
+      setCombatManager(combat);
+      setShowDefeat(false);
+    } catch (error) {
+      console.error("Failed to revive character:", error);
     }
   };
 
@@ -158,59 +215,7 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
     <div className="relative h-[calc(100vh-12rem)] w-full">
       {/* Character Stats Panel */}
       <div className="fixed left-4 bottom-4 z-10">
-        <div className="w-72 bg-white rounded-xl shadow-lg border border-gray-200">
-          {/* Header */}
-          <div className="bg-gray-50 p-3 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medievalsharp text-xl text-gray-800">
-                {character.name}
-              </h3>
-              <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
-                Floor {gameState.floor}
-              </span>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="p-4 space-y-4">
-            {/* Health */}
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Health</span>
-                <span className="text-gray-900 font-medium">
-                  {gameState.character.currentHealth}/
-                  {gameState.character.maxHealth}
-                </span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full">
-                <div
-                  className="h-full bg-red-500 rounded-full transition-all"
-                  style={{
-                    width: `${
-                      (gameState.character.currentHealth /
-                        gameState.character.maxHealth) *
-                      100
-                    }%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Block & Energy */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-blue-50 p-2 rounded-lg">
-                <div className="text-sm text-blue-700">Block</div>
-                <div className="text-blue-900 font-bold">{gameState.block}</div>
-              </div>
-              <div className="bg-amber-50 p-2 rounded-lg">
-                <div className="text-sm text-amber-700">Energy</div>
-                <div className="text-amber-900 font-bold">
-                  {gameState.currentEnergy}/{gameState.maxEnergy}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CharacterStats character={character} gameState={gameState} />
       </div>
 
       {/* Enemy Area */}
@@ -232,7 +237,7 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full">
                   <div
-                    className="h-full bg-red-500 rounded-full transition-all"
+                    className="h-full bg-red-500 rounded-full"
                     style={{
                       width: `${
                         (enemy.currentHealth / enemy.maxHealth) * 100
@@ -240,18 +245,6 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
                     }}
                   />
                 </div>
-              </div>
-
-              {/* Enemy Block */}
-              {enemy.block > 0 && (
-                <div className="flex items-center gap-2 text-blue-600">
-                  <span>Block: {enemy.block}</span>
-                </div>
-              )}
-
-              {/* Enemy Intent */}
-              <div className="mt-2 text-gray-600">
-                {enemy.intent.description}
               </div>
             </div>
           </div>
@@ -314,6 +307,9 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
           onCombatEnd();
         }}
         type="defeat"
+        onRevive={handleRevive}
+        crystalCost={100}
+        userCrystals={userCrystals}
       />
     </div>
   );

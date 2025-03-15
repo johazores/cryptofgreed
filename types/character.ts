@@ -1,6 +1,7 @@
 import { FightingStyle } from "@prisma/client";
 
 export interface Character {
+  level: number;
   experience: number;
   id: string;
   name: string;

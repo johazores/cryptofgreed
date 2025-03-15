@@ -6,6 +6,9 @@ interface GameModalProps {
     gold: number;
     experience: number;
   };
+  onRevive?: () => void;
+  crystalCost?: number;
+  userCrystals?: number;
 }
 
 export default function GameModal({
@@ -13,8 +16,13 @@ export default function GameModal({
   onClose,
   type,
   rewards,
+  onRevive,
+  crystalCost = 100,
+  userCrystals = 0,
 }: GameModalProps) {
   if (!isOpen) return null;
+
+  const canAffordRevive = userCrystals >= crystalCost;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -54,13 +62,38 @@ export default function GameModal({
                 Your character has fallen in battle
               </p>
               <p className="text-red-700 text-center text-sm">
-                This character&apos;s journey has come to an end. Their story
-                will be remembered in the halls of heroes.
+                You can revive this character using crystals, or create a new
+                one.
               </p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg mt-4">
+
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="text-center">
+                <p className="text-purple-800 font-bold mb-2">
+                  Revive Cost: {crystalCost} Crystals
+                </p>
+                <p className="text-purple-600 text-sm">
+                  Your Crystals: {userCrystals}
+                </p>
+              </div>
+
+              <button
+                onClick={onRevive}
+                disabled={!canAffordRevive}
+                className={`w-full mt-4 px-4 py-2 rounded-lg font-medievalsharp text-white transition-all duration-200
+                  ${
+                    canAffordRevive
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
+              >
+                {canAffordRevive ? "Revive Character" : "Not Enough Crystals"}
+              </button>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-600 text-center text-sm">
-                You can create a new character to continue your adventure.
+                Or create a new character to continue your adventure.
               </p>
             </div>
           </div>
