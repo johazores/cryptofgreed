@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, MedievalSharp } from "next/font/google";
 import { NextAuthProvider } from "./providers";
+import { WalletProvider } from "@/context/wallet-connection";
 import Navbar from "@/components/navbar";
 import "./globals.css";
 
@@ -32,8 +33,10 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <NextAuthProvider>
-          <Navbar />
-          <main className="mt-16">{children}</main>
+          <WalletProvider>
+            <Navbar />
+            <main className="mt-16">{children}</main>
+          </WalletProvider>
         </NextAuthProvider>
       </body>
     </html>

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button";
+import WalletButton from "@/components/wallet-button";
 
 type MenuItem = {
   label: string;
@@ -42,7 +43,7 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="flex items-center space-x-3">
+            <Link href="/" className="flex items-center space-x-1">
               <div className="relative w-8 h-8">
                 <img
                   src="/images/logo.svg"
@@ -58,7 +59,7 @@ export default function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-center space-x-8">
+            <div className="ml-10 flex items-center space-x-2">
               {menuItems.map((item) => (
                 <Link
                   key={item.href}
@@ -68,6 +69,7 @@ export default function Navbar() {
                   {item.label}
                 </Link>
               ))}
+              <WalletButton />
               <Button
                 onClick={handleAuthAction}
                 isLoading={status === "loading"}
@@ -135,6 +137,9 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
+            <div className="px-3 py-2">
+              <WalletButton />
+            </div>
             <Button
               onClick={handleAuthAction}
               variant="ghost"
