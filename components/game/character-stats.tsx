@@ -27,23 +27,23 @@ export default function CharacterStats({
   return (
     <>
       <div className="bg-white rounded-lg shadow-lg border border-gray-200">
-        <div className="flex items-center p-3 gap-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center p-2 md:p-3 gap-2 md:gap-4 text-sm md:text-base">
           {/* Character Info */}
-          <div className="flex-shrink-0 border-r border-gray-200 pr-4">
-            <div className="flex items-center gap-2">
-              <h3 className="font-medievalsharp text-lg text-gray-800">
+          <div className="flex-shrink-0 border-b md:border-b-0 md:border-r border-gray-200 pb-2 md:pb-0 md:pr-4 w-full md:w-auto">
+            <div className="flex items-center gap-1 md:gap-2">
+              <h3 className="font-medievalsharp text-base md:text-lg text-gray-800">
                 {character.name}
               </h3>
-              <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
+              <span className="px-1.5 md:px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
                 Lvl {character.level}
               </span>
               <button
                 onClick={() => setShowEquipment(true)}
-                className="ml-2 p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                className="ml-1 md:ml-2 p-1 md:p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                 title="View Equipment"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 md:w-5 md:h-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -57,20 +57,20 @@ export default function CharacterStats({
                 </svg>
               </button>
             </div>
-            <div className="text-xs text-gray-600 mt-1">{character.class}</div>
+            <div className="text-xs text-gray-600">{character.class}</div>
           </div>
 
           {/* Main Stats */}
-          <div className="flex-grow space-y-2 min-w-[200px]">
+          <div className="flex-grow space-y-1 md:space-y-2 min-w-[150px] md:min-w-[200px] w-full md:w-auto">
             {/* Health */}
             <div>
-              <div className="flex justify-between text-xs mb-1">
+              <div className="flex justify-between text-xs mb-0.5 md:mb-1">
                 <span className="text-gray-600">Health</span>
                 <span className="text-gray-900">
                   {currentHealth}/{character.maxHealth}
                 </span>
               </div>
-              <div className="h-1.5 bg-gray-100 rounded-full">
+              <div className="h-1 md:h-1.5 bg-gray-100 rounded-full">
                 <div
                   className="h-full bg-red-500 rounded-full transition-all duration-300"
                   style={{ width: `${healthPercentage}%` }}
@@ -80,11 +80,11 @@ export default function CharacterStats({
 
             {/* Experience */}
             <div>
-              <div className="flex justify-between text-xs mb-1">
+              <div className="flex justify-between text-xs mb-0.5 md:mb-1">
                 <span className="text-gray-600">EXP</span>
                 <span className="text-gray-900">{character.experience}</span>
               </div>
-              <div className="h-1.5 bg-gray-100 rounded-full">
+              <div className="h-1 md:h-1.5 bg-gray-100 rounded-full">
                 <div
                   className="h-full bg-blue-500 rounded-full transition-all duration-300"
                   style={{ width: `${experiencePercentage}%` }}
@@ -95,16 +95,16 @@ export default function CharacterStats({
 
           {/* Combat Stats */}
           {gameState && (
-            <div className="flex gap-3 flex-shrink-0 border-l border-gray-200 pl-4">
-              <div className="bg-blue-50 px-3 py-2 rounded">
+            <div className="flex gap-2 md:gap-3 flex-shrink-0 border-t md:border-t-0 md:border-l border-gray-200 pt-2 md:pt-0 md:pl-4 w-full md:w-auto">
+              <div className="bg-blue-50 px-2 md:px-3 py-1 md:py-2 rounded flex-1 md:flex-auto">
                 <div className="text-xs text-blue-700">Block</div>
-                <div className="text-sm text-blue-900 font-bold">
+                <div className="text-xs md:text-sm text-blue-900 font-bold">
                   {gameState.block}
                 </div>
               </div>
-              <div className="bg-amber-50 px-3 py-2 rounded">
+              <div className="bg-amber-50 px-2 md:px-3 py-1 md:py-2 rounded flex-1 md:flex-auto">
                 <div className="text-xs text-amber-700">Energy</div>
-                <div className="text-sm text-amber-900 font-bold">
+                <div className="text-xs md:text-sm text-amber-900 font-bold">
                   {gameState.currentEnergy}/{gameState.maxEnergy}
                 </div>
               </div>
@@ -112,16 +112,16 @@ export default function CharacterStats({
           )}
 
           {/* Additional Stats */}
-          <div className="flex gap-3 flex-shrink-0 border-l border-gray-200 pl-4">
-            <div className="bg-yellow-50 px-3 py-2 rounded">
+          <div className="flex gap-2 md:gap-3 flex-shrink-0 border-t md:border-t-0 md:border-l border-gray-200 pt-2 md:pt-0 md:pl-4 w-full md:w-auto">
+            <div className="bg-yellow-50 px-2 md:px-3 py-1 md:py-2 rounded flex-1 md:flex-auto">
               <div className="text-xs text-yellow-700">Gold</div>
-              <div className="text-sm text-yellow-900 font-bold">
+              <div className="text-xs md:text-sm text-yellow-900 font-bold">
                 {character.gold}
               </div>
             </div>
-            <div className="bg-purple-50 px-3 py-2 rounded">
+            <div className="bg-purple-50 px-2 md:px-3 py-1 md:py-2 rounded flex-1 md:flex-auto">
               <div className="text-xs text-purple-700">Kills</div>
-              <div className="text-sm text-purple-900 font-bold">
+              <div className="text-xs md:text-sm text-purple-900 font-bold">
                 {character.monstersSlain}
               </div>
             </div>

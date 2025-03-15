@@ -210,20 +210,17 @@ export default function Combat({ onCombatEnd }: CombatProps) {
   }
 
   return (
-    <div className="relative h-[calc(100vh-12rem)] w-full">
-      {/* Character Stats Panel */}
-      <div className="fixed left-4 bottom-4 z-10">
-        <CharacterStats gameState={gameState} />
-      </div>
-
+    <div className="relative min-h-[calc(100vh-4rem)] md:h-[calc(100vh-12rem)] w-full pb-[280px] md:pb-32">
       {/* Enemy Area */}
-      <div className="flex justify-center gap-4 p-8">
+      <div className="flex flex-wrap justify-center gap-2 md:gap-4 p-4 md:p-8 mb-[100px]">
         {enemies.map((enemy, index) => (
           <div
             key={enemy.id}
-            className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+            className="bg-white p-3 md:p-6 rounded-xl shadow-lg border border-gray-200 w-full md:w-auto max-w-[280px]"
           >
-            <div className="text-xl font-bold mb-2">{enemy.name}</div>
+            <div className="text-lg md:text-xl font-bold mb-2">
+              {enemy.name}
+            </div>
             <div className="space-y-2">
               {/* Enemy Health */}
               <div>
@@ -249,46 +246,73 @@ export default function Combat({ onCombatEnd }: CombatProps) {
         ))}
       </div>
 
-      {/* Add End Turn Button */}
-      <div className="fixed right-4 bottom-4 z-10">
-        <button
-          onClick={handleEndTurn}
-          className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medievalsharp text-lg shadow-lg transition-all duration-200 hover:shadow-xl"
-        >
-          End Turn
-        </button>
-      </div>
+      {/* Bottom UI Container */}
+      <div className="fixed bottom-0 left-0 right-0 z-10">
+        {/* Character Stats Panel */}
+        <div className="px-2 md:px-4 mb-2">
+          <CharacterStats gameState={gameState} />
+        </div>
 
-      {/* Hand Area */}
-      <div className="absolute bottom-0 left-0 right-0 p-4">
-        <div className="flex justify-center gap-3">
-          {gameState.hand.map((card, index) => (
-            <div
-              key={`${card.id}-${index}`}
-              onClick={() => handleCardClick(index)}
-              className={`bg-white p-4 rounded-lg shadow-md border border-gray-200 w-32 cursor-pointer 
-                transform transition-all duration-200 hover:-translate-y-2
-                ${
-                  card.energy > gameState.currentEnergy
-                    ? "opacity-50"
-                    : "hover:shadow-xl"
-                }`}
-            >
-              <div className="text-sm font-bold mb-1">{card.name}</div>
-              <div className="text-xs text-gray-600">{card.description}</div>
-              <div
-                className={`text-xs mt-1 ${
-                  card.energy > gameState.currentEnergy
-                    ? "text-red-600"
-                    : "text-blue-600"
-                }`}
-              >
-                Energy: {card.energy}
-              </div>
+        {/* Hand Area */}
+        <div className="h-36 md:h-48 bg-gradient-to-t from-gray-900/20 to-transparent">
+          <div className="p-2 md:p-4 overflow-x-auto pb-2 hide-scrollbar h-full">
+            <div className="flex gap-2 md:gap-3 min-w-min justify-start md:justify-center h-full">
+              {gameState.hand.map((card, index) => (
+                <div
+                  key={`${card.id}-${index}`}
+                  onClick={() => handleCardClick(index)}
+                  className={`flex-shrink-0 bg-white p-2 md:p-4 rounded-lg shadow-md border border-gray-200 
+                    w-24 md:w-32 h-full cursor-pointer 
+                    transform transition-all duration-200 hover:-translate-y-2
+                    ${
+                      card.energy > gameState.currentEnergy
+                        ? "opacity-50"
+                        : "hover:shadow-xl"
+                    }`}
+                >
+                  <div className="text-xs md:text-sm font-bold mb-1">
+                    {card.name}
+                  </div>
+                  <div className="text-[10px] md:text-xs text-gray-600">
+                    {card.description}
+                  </div>
+                  <div
+                    className={`text-[10px] md:text-xs mt-1 ${
+                      card.energy > gameState.currentEnergy
+                        ? "text-red-600"
+                        : "text-blue-600"
+                    }`}
+                  >
+                    Energy: {card.energy}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* End Turn Button - Moved inside hand area */}
+          <div className="absolute right-2 md:right-4 bottom-2 md:bottom-4">
+            <button
+              onClick={handleEndTurn}
+              className="px-4 md:px-6 py-2 md:py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medievalsharp text-base md:text-lg shadow-lg transition-all duration-200 hover:shadow-xl"
+            >
+              End Turn
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Add this CSS to your global styles */}
+      <style jsx global>{`
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
       <GameModal
         isOpen={showVictory}
         onClose={() => {
