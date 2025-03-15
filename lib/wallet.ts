@@ -5,7 +5,7 @@ export class WalletService {
   private provider: ethers.JsonRpcProvider;
 
   constructor() {
-    this.provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    this.provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
   }
 
   getProvider(): ethers.JsonRpcProvider {
