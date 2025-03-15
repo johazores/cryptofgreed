@@ -52,7 +52,7 @@ export default function CharacterCreation() {
   return (
     <div className="max-w-2xl mx-auto p-8 bg-gradient-to-b from-white to-gray-50 rounded-xl shadow-xl">
       <h2 className="font-medievalsharp text-3xl text-primary text-center mb-8">
-        Create Your Champion
+        Create Your Character
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -64,7 +64,7 @@ export default function CharacterCreation() {
 
         <div>
           <label className="block text-lg mb-3 font-medievalsharp">
-            Champion Name
+            Character Name
           </label>
           <input
             type="text"

@@ -74,7 +74,7 @@ export default function DashboardPage() {
       ) : (
         <>
           <h2 className="font-medievalsharp text-2xl mb-6 text-center">
-            Select Your Champion
+            Select Your Character
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {characters.map((character) => (
