@@ -37,6 +37,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          walletAddress: user.walletAddress,
+          custodialWalletAddress: user.custodialWalletAddress,
         };
       },
     }),
@@ -52,12 +54,20 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.sub!;
         session.user.email = token.email as string;
+        session.user.name = token.name as string | null;
+        session.user.walletAddress = token.walletAddress as string | null;
+        session.user.custodialWalletAddress = token.custodialWalletAddress as
+          | string
+          | null;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
         token.email = user.email;
+        token.name = user.name;
+        token.walletAddress = user.walletAddress;
+        token.custodialWalletAddress = user.custodialWalletAddress;
       }
       return token;
     },

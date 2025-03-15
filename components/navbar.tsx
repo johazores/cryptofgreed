@@ -12,21 +12,30 @@ type MenuItem = {
   href: string;
 };
 
-const menuItems: MenuItem[] = [
-  {
-    label: "About",
-    href: "/about",
-  },
-  {
-    label: "Contact",
-    href: "/contact",
-  },
-];
-
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  const menuItems: MenuItem[] = [
+    {
+      label: "About",
+      href: "/about",
+    },
+    {
+      label: "Contact",
+      href: "/contact",
+    },
+    // Add this new item if user is logged in
+    ...(session
+      ? [
+          {
+            label: "Wallet & NFTs",
+            href: "/dashboard/wallet",
+          },
+        ]
+      : []),
+  ];
 
   const handleAuthAction = async () => {
     if (session) {

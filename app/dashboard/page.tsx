@@ -7,6 +7,8 @@ import Loader from "@/components/ui/loader";
 import CharacterSelection from "@/components/character-selection";
 import { useCharacter } from "@/context/character-context";
 import { toast } from "sonner";
+import NFTManager from "@/components/nft/nft-manager";
+import WalletManager from "@/components/wallet/wallet-manager";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -69,6 +71,7 @@ export default function DashboardPage() {
         <p className="text-sm text-primary mt-2">Crystals: {crystals}</p>
       </div>
 
+      {/* Existing Character Selection Section */}
       {characters.length === 0 ? (
         <CharacterCreation />
       ) : (
