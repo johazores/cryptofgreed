@@ -5,8 +5,10 @@ interface GameModalProps {
   rewards?: {
     gold: number;
     experience: number;
+    floor: number;
   };
   onRevive?: () => void;
+  onNextFloor?: () => void;
   crystalCost?: number;
   userCrystals?: number;
 }
@@ -17,12 +19,14 @@ export default function GameModal({
   type,
   rewards,
   onRevive,
-  crystalCost = 100,
-  userCrystals = 0,
+  onNextFloor,
+  crystalCost,
+  userCrystals,
 }: GameModalProps) {
-  if (!isOpen) return null;
+  const canAffordRevive =
+    userCrystals && crystalCost ? userCrystals >= crystalCost : false;
 
-  const canAffordRevive = userCrystals >= crystalCost;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -49,6 +53,12 @@ export default function GameModal({
                 <span className="text-amber-700">Experience</span>
                 <span className="font-bold text-amber-900">
                   +{rewards.experience}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-amber-700">Floor Completed</span>
+                <span className="font-bold text-amber-900">
+                  {rewards.floor}
                 </span>
               </div>
             </div>
@@ -100,14 +110,21 @@ export default function GameModal({
         )}
 
         <button
-          onClick={onClose}
+          onClick={() => {
+            if (type === "victory" && onNextFloor) {
+              onNextFloor();
+            }
+            onClose();
+          }}
           className={`w-full mt-6 px-6 py-3 ${
             type === "victory"
               ? "bg-primary hover:bg-primary-dark"
               : "bg-red-600 hover:bg-red-700"
           } text-white rounded-lg font-medievalsharp text-lg shadow-lg transition-all duration-200 hover:shadow-xl`}
         >
-          {type === "victory" ? "Continue" : "Return to Character Selection"}
+          {type === "victory"
+            ? "Continue to Next Floor"
+            : "Return to Character Selection"}
         </button>
       </div>
     </div>

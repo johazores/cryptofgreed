@@ -9,9 +9,14 @@ import CharacterStats from "./character-stats";
 interface CombatProps {
   character: Character;
   onCombatEnd: () => void;
+  onCharacterUpdate?: (updatedCharacter: Character) => void;
 }
 
-export default function Combat({ character, onCombatEnd }: CombatProps) {
+export default function Combat({
+  character,
+  onCombatEnd,
+  onCharacterUpdate,
+}: CombatProps) {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [combatManager, setCombatManager] = useState<CombatManager | null>(
@@ -37,7 +42,6 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
   }, []);
 
   const handleCombatVictory = async () => {
-    // Calculate rewards based on floor level and enemies defeated
     const goldReward = Math.floor(
       50 * (gameState?.floor || 1) * (1 + Math.random() * 0.5)
     );
@@ -51,6 +55,15 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
     });
 
     try {
+      // Calculate the updated stats
+      const updates = {
+        gold: character.gold + goldReward,
+        experience: character.experience + expReward,
+        currentHealth:
+          gameState?.character.currentHealth || character.currentHealth,
+        monstersSlain: character.monstersSlain + enemies.length,
+      };
+
       const response = await fetch("/api/characters/update", {
         method: "POST",
         headers: {
@@ -58,11 +71,7 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
         },
         body: JSON.stringify({
           characterId: character.id,
-          updates: {
-            gold: character.gold + goldReward,
-            experience: character.experience + expReward,
-            currentHealth: gameState?.character.currentHealth,
-          },
+          updates,
         }),
       });
 
@@ -70,10 +79,25 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
         throw new Error("Failed to update character stats");
       }
 
+      const updatedCharacter = await response.json();
+
+      // Update the local character state
+      if (onCharacterUpdate) {
+        onCharacterUpdate({
+          ...updatedCharacter,
+          // Preserve the combat-specific properties
+          equipment: character.equipment || [],
+          powers: character.powers || [],
+          block: 0,
+          deck: [],
+          hand: [],
+          discardPile: [],
+        });
+      }
+
       setShowVictory(true);
     } catch (error) {
       console.error("Failed to update character:", error);
-      // Handle error appropriately
     }
   };
 
@@ -142,6 +166,34 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
     } catch (error) {
       console.error("Failed to revive character:", error);
     }
+  };
+
+  const handleNextFloor = () => {
+    // Initialize game state with enhanced character for next floor
+    const enhancedCharacter: Character = {
+      ...character,
+      equipment: character.equipment || [],
+      powers: character.powers || [],
+      block: 0,
+      deck: [],
+      hand: [],
+      discardPile: [],
+    };
+
+    const gameManager = new GameManager(enhancedCharacter);
+    const initialGameState = gameManager.getState();
+    initialGameState.floor = (gameState?.floor || 1) + 1; // Increment floor
+
+    // Create an enemy for the new floor
+    const enemy = EnemyManager.createEnemy(initialGameState.floor);
+
+    // Initialize combat manager
+    const combat = new CombatManager(initialGameState, [enemy]);
+
+    setGameState(initialGameState);
+    setEnemies([enemy]);
+    setCombatManager(combat);
+    setShowVictory(false);
   };
 
   useEffect(() => {
@@ -298,7 +350,12 @@ export default function Combat({ character, onCombatEnd }: CombatProps) {
           onCombatEnd();
         }}
         type="victory"
-        rewards={rewards}
+        rewards={{
+          gold: rewards.gold,
+          experience: rewards.experience,
+          floor: gameState?.floor || 1,
+        }}
+        onNextFloor={handleNextFloor}
       />
       <GameModal
         isOpen={showDefeat}

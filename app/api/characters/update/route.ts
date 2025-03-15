@@ -29,15 +29,14 @@ export async function POST(req: Request) {
         experience: updates.experience ?? character.experience,
         currentHealth: updates.currentHealth ?? character.currentHealth,
         isDead: updates.isDead ?? character.isDead,
+        monstersSlain: updates.monstersSlain ?? character.monstersSlain,
       },
     });
 
+    // Return the updated character
     return NextResponse.json(updatedCharacter);
   } catch (error) {
     console.error("Error updating character:", error);
-    return new NextResponse(
-      error instanceof Error ? error.message : "Internal Server Error",
-      { status: 500 }
-    );
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

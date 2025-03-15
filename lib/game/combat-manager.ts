@@ -19,6 +19,9 @@ export class CombatManager {
       turn: 1,
       isPlayerTurn: true,
     };
+
+    // Initialize combat state
+    this.drawNewHand();
   }
 
   playCard(cardIndex: number, targetIndex: number): boolean {
@@ -146,8 +149,15 @@ export class CombatManager {
     // Reset block
     this.gameState.block = 0;
 
-    // Draw new hand
-    this.drawNewHand();
+    // Process enemy actions if it's not game over
+    if (!this.isCombatOver()) {
+      this.processEnemyTurn();
+    }
+
+    // Draw new hand if combat is still ongoing
+    if (!this.isCombatOver()) {
+      this.drawNewHand();
+    }
   }
 
   private drawNewHand() {

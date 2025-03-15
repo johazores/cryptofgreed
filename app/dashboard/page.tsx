@@ -1,53 +1,95 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import CharacterCreation from "@/components/character-creation";
 import { Character } from "@/types/character";
 import Loader from "@/components/ui/loader";
-import GameScreen from "@/components/game/game-screen";
 import CharacterStats from "@/components/game/character-stats";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [characters, setCharacters] = useState<Character[]>([]);
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
-    null
-  );
+  const [crystals, setCrystals] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const router = useRouter();
+
+  // Add function to fetch crystal balance
+  const fetchCrystals = async () => {
+    try {
+      const response = await fetch("/api/user/crystals");
+      if (response.ok) {
+        const data = await response.json();
+        setCrystals(data.crystals);
+      }
+    } catch (error) {
+      console.error("Failed to fetch crystals:", error);
+    }
+  };
+
+  // Add function to handle character revival
+  const handleRevive = async (characterId: string) => {
+    if (crystals < 100) {
+      toast.error("You need 100 crystals to revive your character");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/characters/revive", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ characterId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to revive character");
+      }
+
+      // Show success message
+      toast.success("Character revived successfully!");
+
+      // Refresh crystals and characters
+      await Promise.all([fetchCrystals(), fetchCharacters()]);
+    } catch (error) {
+      console.error("Failed to revive character:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to revive character"
+      );
+    }
+  };
+
+  const fetchCharacters = async () => {
+    try {
+      const response = await fetch("/api/characters");
+      if (response.ok) {
+        const data = await response.json();
+        setCharacters(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch characters:", error);
+      toast.error("Failed to load characters");
+    }
+  };
 
   useEffect(() => {
-    async function fetchCharacters() {
+    async function initializeData() {
       try {
-        const response = await fetch("/api/characters");
-        if (response.ok) {
-          const data = await response.json();
-          setCharacters(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch characters:", error);
+        await Promise.all([fetchCharacters(), fetchCrystals()]);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchCharacters();
+    initializeData();
   }, []);
 
   if (loading) {
     return <Loader fullScreen className="h-8 w-8" />;
-  }
-
-  if (isPlaying && selectedCharacter) {
-    return (
-      <GameScreen
-        character={selectedCharacter}
-        onExit={() => {
-          setIsPlaying(false);
-          setSelectedCharacter(null);
-        }}
-      />
-    );
   }
 
   return (
@@ -59,6 +101,7 @@ export default function DashboardPage() {
         <p className="text-gray-600">
           Welcome back, {session?.user?.email?.split("@")[0]}
         </p>
+        <p className="text-sm text-primary mt-2">Crystals: {crystals}</p>
       </div>
 
       {characters.length === 0 ? (
@@ -81,20 +124,17 @@ export default function DashboardPage() {
                 <div className="bg-gradient-to-b from-primary/10 to-transparent flex justify-center flex-col items-center p-4">
                   <CharacterStats character={character} />
 
-                  <div className="mt-4 flex justify-center">
-                    <button
-                      onClick={() => {
-                        setSelectedCharacter(character);
-                        setIsPlaying(true);
-                      }}
-                      disabled={character.isDead}
-                      className={`w-full py-3 px-6 rounded-lg font-medievalsharp text-lg ${
-                        character.isDead
-                          ? "bg-gray-500 cursor-not-allowed"
-                          : "bg-primary hover:bg-primary-dark"
-                      } text-white transition-colors duration-200`}
-                    >
-                      {character.isDead ? (
+                  <div className="mt-4 flex justify-center gap-2">
+                    {character.isDead ? (
+                      <button
+                        onClick={() => handleRevive(character.id)}
+                        disabled={crystals < 100}
+                        className={`w-full py-3 px-6 rounded-lg font-medievalsharp text-lg ${
+                          crystals < 100
+                            ? "bg-gray-500 cursor-not-allowed"
+                            : "bg-red-600 hover:bg-red-700"
+                        } text-white transition-colors duration-200`}
+                      >
                         <span className="flex items-center justify-center gap-2">
                           <svg
                             className="w-5 h-5"
@@ -107,12 +147,19 @@ export default function DashboardPage() {
                               clipRule="evenodd"
                             />
                           </svg>
-                          Fallen
+                          Revive (100 Crystals)
                         </span>
-                      ) : (
-                        "Enter the Crypt"
-                      )}
-                    </button>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          router.push(`/dashboard/game/${character.id}`)
+                        }
+                        className="w-full py-3 px-6 rounded-lg font-medievalsharp text-lg bg-primary hover:bg-primary-dark text-white transition-colors duration-200"
+                      >
+                        Enter the Crypt
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
