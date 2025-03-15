@@ -7,9 +7,18 @@ import GameModal from "./end-battle-modal";
 import CharacterStats from "./character-stats";
 import { useCharacter } from "@/context/character-context";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import RoomSelectionModal from "./room-selection-modal";
 
 interface CombatProps {
   onCombatEnd: () => void;
+}
+
+enum RoomType {
+  BATTLE = "BATTLE",
+  REST = "REST",
+  SHOP = "SHOP",
+  EVENT = "EVENT",
 }
 
 export default function Combat({ onCombatEnd }: CombatProps) {
@@ -34,6 +43,9 @@ export default function Combat({ onCombatEnd }: CombatProps) {
   }>({ gold: 0, experience: 0, floor: 1 });
   const [userCrystals, setUserCrystals] = useState(0);
   const [defeatedEnemies, setDefeatedEnemies] = useState<Enemy[]>([]);
+  const router = useRouter();
+  const [showRoomSelection, setShowRoomSelection] = useState(false);
+  const [availableRooms, setAvailableRooms] = useState<RoomType[]>([]);
 
   useEffect(() => {
     const fetchUserCrystals = async () => {
@@ -110,12 +122,15 @@ export default function Combat({ onCombatEnd }: CombatProps) {
       // Calculate new values
       const newGold = character.gold + goldReward;
       const newExp = character.experience + expReward;
+      const newMonstersSlain = character.monstersSlain + defeatedEnemies.length;
 
       console.log("Victory calculation:", {
         currentExp: character.experience,
         expReward,
         newTotalExp: newExp,
         floor: gameState.floor,
+        currentMonstersSlain: character.monstersSlain,
+        newMonstersSlain,
         defeatedEnemies: defeatedEnemies.map((e) => ({
           name: e.name,
           isBoss: e.isBoss,
@@ -128,7 +143,7 @@ export default function Combat({ onCombatEnd }: CombatProps) {
         gold: newGold,
         experience: newExp,
         currentHealth: gameState.character.currentHealth,
-        monstersSlain: character.monstersSlain + defeatedEnemies.length,
+        monstersSlain: newMonstersSlain, // Make sure this is included
       });
 
       if (!updatedCharacter) {
@@ -199,31 +214,74 @@ export default function Combat({ onCombatEnd }: CombatProps) {
     // Clear defeated enemies for next combat
     setDefeatedEnemies([]);
 
-    // Initialize game state with enhanced character for next floor
-    const enhancedCharacter: Character = {
-      ...character,
-      equipment: character.equipment || [],
-      powers: character.powers || [],
-      block: 0,
-      deck: [],
-      hand: [],
-      discardPile: [],
-    };
+    const nextFloor = (gameState?.floor || 1) + 1;
 
-    const gameManager = new GameManager(enhancedCharacter);
-    const initialGameState = gameManager.getState();
-    initialGameState.floor = (gameState?.floor || 1) + 1; // Increment floor
+    // Special case: force rest site every 5 floors
+    if (nextFloor % 5 === 0) {
+      router.push(`/dashboard/game/${character.id}/rest`);
+      return;
+    }
 
-    // Create an enemy for the new floor
-    const enemy = EnemyManager.createEnemy(initialGameState.floor);
+    // Generate 2 random unique room options
+    const possibleRooms = [
+      RoomType.BATTLE,
+      RoomType.REST,
+      RoomType.SHOP,
+      RoomType.EVENT,
+    ];
+    const numberOfChoices = 2; // Changed from 3 to 2
+    const shuffledRooms = [...possibleRooms].sort(() => Math.random() - 0.5);
+    const selectedRooms = shuffledRooms.slice(0, numberOfChoices);
+
+    setAvailableRooms(selectedRooms);
+    setShowRoomSelection(true);
+  };
+
+  const handleRoomSelection = (selectedRoom: RoomType) => {
+    setShowRoomSelection(false);
+
+    switch (selectedRoom) {
+      case RoomType.REST:
+        router.push(`/dashboard/game/${character.id}/rest`);
+        break;
+      case RoomType.SHOP:
+        router.push(`/dashboard/game/${character.id}/shop`);
+        break;
+      case RoomType.EVENT:
+        router.push(`/dashboard/game/${character.id}/event`);
+        break;
+      case RoomType.BATTLE:
+        // Initialize game state with enhanced character for next floor
+        const enhancedCharacter: Character = {
+          ...character,
+          equipment: character.equipment || [],
+          powers: character.powers || [],
+          block: 0,
+          deck: [],
+          hand: [],
+          discardPile: [],
+        };
+
+        const gameManager = new GameManager(enhancedCharacter);
+        const initialGameState = gameManager.getState();
+        initialGameState.floor = (gameState?.floor || 1) + 1;
+
+        setGameState(initialGameState);
+        setShowVictory(false);
+        initializeBattle(initialGameState);
+        break;
+    }
+  };
+
+  const initializeBattle = (gameState: GameState) => {
+    // Create a new enemy for the current floor
+    const enemy = EnemyManager.createEnemy(gameState.floor);
 
     // Initialize combat manager
-    const combat = new CombatManager(initialGameState, [enemy]);
+    const combat = new CombatManager(gameState, [enemy]);
 
-    setGameState(initialGameState);
     setEnemies([enemy]);
     setCombatManager(combat);
-    setShowVictory(false);
   };
 
   const handleCardClick = (index: number) => {
@@ -371,6 +429,12 @@ export default function Combat({ onCombatEnd }: CombatProps) {
         }
       `}</style>
 
+      <RoomSelectionModal
+        isOpen={showRoomSelection}
+        onClose={() => setShowRoomSelection(false)}
+        onSelectRoom={handleRoomSelection}
+        availableRooms={availableRooms}
+      />
       <GameModal
         isOpen={showVictory}
         onClose={() => {
