@@ -5,7 +5,7 @@ import { handleContinueToNextRoom } from "@/lib/game/room-navigation";
 import CharacterStats from "./character-stats";
 
 export default function RestSite() {
-  const { character, updateCharacterStats } = useCharacter();
+  const { character, updateCharacter } = useCharacter();
   const router = useRouter();
 
   const handleRest = async () => {
@@ -17,11 +17,15 @@ export default function RestSite() {
       character.currentHealth + healAmount
     );
 
-    await updateCharacterStats(character.id, {
-      currentHealth: newHealth,
-    });
+    try {
+      await updateCharacter(character.id, {
+        currentHealth: newHealth,
+      });
 
-    handleContinueToNextRoom(character, router);
+      handleContinueToNextRoom(character, router);
+    } catch (error) {
+      console.error("Failed to rest:", error);
+    }
   };
 
   return (

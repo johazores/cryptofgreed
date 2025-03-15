@@ -12,6 +12,10 @@ export default function EquipmentModal({
   onClose,
   character,
 }: EquipmentModalProps) {
+  // Add null checks for both arrays
+  const equippedItems = character?.equipment || [];
+  const powers = character?.powers || [];
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl">
       <div className="p-6">
@@ -45,7 +49,7 @@ export default function EquipmentModal({
             Equipment
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {character.equipment.map((item) => (
+            {equippedItems.map((item) => (
               <div
                 key={item.id}
                 className="bg-gray-50 rounded-lg p-4 border border-gray-200"
@@ -77,7 +81,7 @@ export default function EquipmentModal({
             Powers
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {character.powers.map((power) => (
+            {powers.map((power) => (
               <div
                 key={power.id}
                 className="bg-purple-50 rounded-lg p-4 border border-purple-200"

@@ -23,13 +23,8 @@ enum RoomType {
 }
 
 export default function Combat({ onCombatEnd }: CombatProps) {
-  const {
-    character,
-    updateCharacterStats,
-    markCharacterAsDead,
-    reviveCharacter,
-    updateCharacter,
-  } = useCharacter();
+  const { character, updateCharacter, markCharacterAsDead, reviveCharacter } =
+    useCharacter();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [combatManager, setCombatManager] = useState<CombatManager | null>(
@@ -87,7 +82,7 @@ export default function Combat({ onCombatEnd }: CombatProps) {
     setGameState(initialGameState);
     setEnemies([enemy]);
     setCombatManager(combat);
-  }, [character]);
+  }, [character?.id]); // Only re-run when character ID changes
 
   useEffect(() => {
     if (gameState?.status === "VICTORY") {
@@ -125,26 +120,12 @@ export default function Combat({ onCombatEnd }: CombatProps) {
       const newExp = character.experience + expReward;
       const newMonstersSlain = character.monstersSlain + defeatedEnemies.length;
 
-      console.log("Victory calculation:", {
-        currentExp: character.experience,
-        expReward,
-        newTotalExp: newExp,
-        floor: gameState.floor,
-        currentMonstersSlain: character.monstersSlain,
-        newMonstersSlain,
-        defeatedEnemies: defeatedEnemies.map((e) => ({
-          name: e.name,
-          isBoss: e.isBoss,
-          isElite: e.isElite,
-        })),
-      });
-
-      // Update character stats with explicit typing
-      const updatedCharacter = await updateCharacterStats(character.id, {
+      // Update character stats
+      const updatedCharacter = await updateCharacter(character.id, {
         gold: newGold,
         experience: newExp,
-        currentHealth: gameState.character.currentHealth,
-        monstersSlain: newMonstersSlain, // Make sure this is included
+        currentHealth: Math.max(1, gameState.character.currentHealth), // Ensure health is at least 1
+        monstersSlain: newMonstersSlain,
       });
 
       if (!updatedCharacter) {
@@ -153,11 +134,6 @@ export default function Combat({ onCombatEnd }: CombatProps) {
 
       // Clear defeated enemies for next combat
       setDefeatedEnemies([]);
-
-      // Make sure the character context is updated with the new values
-      if (updateCharacter) {
-        await updateCharacter(character.id);
-      }
 
       // Update the rewards display
       setRewards({
@@ -169,7 +145,7 @@ export default function Combat({ onCombatEnd }: CombatProps) {
       setShowVictory(true);
     } catch (error) {
       console.error("Failed to update character:", error);
-      toast.error("Failed to update character stats");
+      toast.error("Failed to update character stats. Please try again.");
     }
   };
 

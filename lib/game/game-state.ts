@@ -1,11 +1,8 @@
+"use client";
 import { Character } from "@/types/character";
 import { Card, getStarterDeck } from "@/lib/cards";
 import { Enemy } from "./enemy";
 import { FightingStyle } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
-import { ethers } from "ethers";
-import { WalletService } from "@/lib/wallet";
-import { decrypt } from "@/lib/encryption";
 
 // Add these new types at the top
 export type CombatState = {
@@ -158,54 +155,19 @@ export class GameManager {
   }
 }
 
-async function handleCharacterDeath(characterId: string) {
-  try {
-    // Start transaction
-    await prisma.$transaction(async (tx) => {
-      // Get character with equipment
-      const character = await tx.character.findUnique({
-        where: { id: characterId },
-        include: { equipment: true },
-      });
+// Move this to an API route
+export async function handleCharacterDeath(characterId: string) {
+  const response = await fetch("/api/character/death", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ characterId }),
+  });
 
-      if (!character) throw new Error("Character not found");
-
-      // For each equipped NFT
-      for (const item of character.equipment) {
-        // Get the contract instance
-        const walletService = new WalletService();
-        const user = await tx.user.findUnique({
-          where: { id: character.userId },
-          select: { encryptedPrivateKey: true },
-        });
-
-        if (!user) throw new Error("User not found");
-
-        const privateKey = await decrypt(user.encryptedPrivateKey);
-
-        // Call burn function on NFT contract
-        const contract = new ethers.Contract(
-          process.env.NEXT_PUBLIC_EQUIPMENT_CONTRACT_ADDRESS as string,
-          ["function burn(uint256 tokenId)"],
-          new ethers.Wallet(privateKey, walletService.getProvider())
-        );
-
-        await contract.burn(item.nftId);
-
-        // Delete equipment from database
-        await tx.equipment.delete({
-          where: { id: item.id },
-        });
-      }
-
-      // Mark character as dead
-      await tx.character.update({
-        where: { id: characterId },
-        data: { isDead: true },
-      });
-    });
-  } catch (error) {
-    console.error("Error handling character death:", error);
-    throw error;
+  if (!response.ok) {
+    throw new Error("Failed to handle character death");
   }
+
+  return response.json();
 }

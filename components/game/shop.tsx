@@ -22,7 +22,7 @@ interface ShopItem {
 }
 
 export default function Shop() {
-  const { character, updateCharacter, updateCharacterStats } = useCharacter();
+  const { character, updateCharacter } = useCharacter();
   const router = useRouter();
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
 
@@ -97,13 +97,10 @@ export default function Shop() {
 
       if (!response.ok) throw new Error("Failed to purchase item");
 
-      // Update character's gold
-      await updateCharacterStats(character.id, {
+      // Update character's gold using updateCharacter instead
+      await updateCharacter(character.id, {
         gold: character.gold - item.price,
       });
-
-      // Refresh character data
-      await updateCharacter(character.id);
 
       toast.success("Item purchased successfully!");
     } catch (error) {

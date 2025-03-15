@@ -14,8 +14,11 @@ export default function GameClient({ initialCharacter }: GameClientProps) {
   const { setCharacter } = useCharacter();
 
   useEffect(() => {
+    if (!initialCharacter) return;
+
+    // Only set character if it's different from current
     setCharacter(initialCharacter);
-  }, [initialCharacter, setCharacter]);
+  }, [initialCharacter.id]); // Only depend on the ID
 
   return <GameScreen onExit={() => router.push("/dashboard")} />;
 }

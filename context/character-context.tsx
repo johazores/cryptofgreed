@@ -1,5 +1,11 @@
 "use client";
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import { Character } from "@/types/character";
 import { toast } from "sonner";
 
@@ -7,13 +13,13 @@ interface CharacterContextType {
   character: Character | null;
   characters: Character[];
   setCharacter: (character: Character) => void;
-  updateCharacter: (characterId: string) => Promise<void>;
-  fetchCharacters: () => Promise<void>;
-  reviveCharacter: (characterId: string) => Promise<void>;
-  updateCharacterStats: (
+  updateCharacter: (
     characterId: string,
-    updates: Partial<Character>
+    updates?: Partial<Character>
   ) => Promise<Character>;
+  fetchCharacters: () => Promise<void>;
+  fetchCharacter: (characterId: string) => Promise<void>;
+  reviveCharacter: (characterId: string) => Promise<void>;
   markCharacterAsDead: (characterId: string) => Promise<void>;
 }
 
@@ -32,129 +38,116 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       setCharacters(data);
     } catch (error) {
-      console.error("Failed to fetch characters:", error);
       toast.error("Failed to load characters");
     }
   }, []);
 
-  const updateCharacter = useCallback(async (characterId: string) => {
+  const fetchCharacter = useCallback(async (characterId: string) => {
     try {
-      const response = await fetch(`/api/characters/${characterId}`);
-      if (!response.ok) throw new Error("Failed to fetch character");
+      const response = await fetch("/api/characters/details", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ characterId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
       const data = await response.json();
       setCharacter(data);
-      // Also update the character in the characters array
-      setCharacters((prev) =>
-        prev.map((c) => (c.id === characterId ? data : c))
-      );
+      return data;
     } catch (error) {
-      console.error("Error updating character:", error);
+      console.error("Failed to fetch character:", error);
+      throw error;
     }
   }, []);
 
-  const reviveCharacter = useCallback(
-    async (characterId: string) => {
-      try {
-        const response = await fetch("/api/characters/revive", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ characterId }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to revive character");
-        }
-
-        toast.success("Character revived successfully!");
-        await fetchCharacters();
-
-        // If the revived character is the current character, update it
-        if (character?.id === characterId) {
-          await updateCharacter(characterId);
-        }
-      } catch (error) {
-        console.error("Failed to revive character:", error);
-        toast.error(
-          error instanceof Error ? error.message : "Failed to revive character"
-        );
-        throw error;
+  const updateCharacter = useCallback(
+    async (characterId: string, updates?: Partial<Character>) => {
+      if (!characterId) {
+        throw new Error("Character ID is required");
       }
-    },
-    [character, fetchCharacters, updateCharacter]
-  );
 
-  const updateCharacterStats = useCallback(
-    async (
-      characterId: string,
-      updates: Partial<Character>
-    ): Promise<Character> => {
       try {
         const response = await fetch("/api/characters/update", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             characterId,
-            updates,
+            updates: {
+              ...updates,
+              currentHealth: updates?.currentHealth ?? undefined,
+              gold: updates?.gold ?? undefined,
+              experience: updates?.experience ?? undefined,
+              monstersSlain: updates?.monstersSlain ?? undefined,
+            },
           }),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to update character stats");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || "Failed to update character");
         }
 
         const updatedCharacter = await response.json();
-        await updateCharacter(characterId);
+
+        setCharacter((prev) =>
+          prev?.id === characterId ? updatedCharacter : prev
+        );
+        setCharacters((prev) =>
+          prev.map((char) =>
+            char.id === characterId ? updatedCharacter : char
+          )
+        );
+
         return updatedCharacter;
       } catch (error) {
-        console.error("Failed to update character:", error);
+        console.error("Error updating character:", error);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to update character"
+        );
         throw error;
       }
     },
-    [updateCharacter]
+    []
   );
 
-  const markCharacterAsDead = useCallback(
-    async (characterId: string) => {
-      try {
-        await updateCharacterStats(characterId, {
-          isDead: true,
-          currentHealth: 0,
+  const value = useMemo(
+    () => ({
+      character,
+      characters,
+      setCharacter,
+      updateCharacter,
+      fetchCharacters,
+      fetchCharacter,
+      reviveCharacter: async (characterId: string) => {
+        await updateCharacter(characterId, {
+          isDead: false,
+          currentHealth: character?.maxHealth,
         });
-      } catch (error) {
-        console.error("Failed to update character death status:", error);
-        throw error;
-      }
-    },
-    [updateCharacterStats]
+      },
+      markCharacterAsDead: async (characterId: string) => {
+        await updateCharacter(characterId, { isDead: true });
+      },
+    }),
+    [character, characters, updateCharacter, fetchCharacters, fetchCharacter]
   );
 
   return (
-    <CharacterContext.Provider
-      value={{
-        character,
-        characters,
-        setCharacter,
-        updateCharacter,
-        fetchCharacters,
-        reviveCharacter,
-        updateCharacterStats,
-        markCharacterAsDead,
-      }}
-    >
+    <CharacterContext.Provider value={value}>
       {children}
     </CharacterContext.Provider>
   );
 }
 
-export const useCharacter = () => {
+export function useCharacter() {
   const context = useContext(CharacterContext);
   if (context === undefined) {
     throw new Error("useCharacter must be used within a CharacterProvider");
   }
   return context;
-};
+}

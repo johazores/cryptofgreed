@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { WalletService } from "@/lib/wallet";
 import { decrypt } from "@/lib/encryption";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 
 export async function POST(req: Request) {
   try {

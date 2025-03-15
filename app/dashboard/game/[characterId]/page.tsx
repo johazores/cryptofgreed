@@ -1,36 +1,68 @@
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { use } from "react";
+import { useCharacter } from "@/context/character-context";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import GameClient from "./game";
+import Loader from "@/components/ui/loader";
 import { ItemStats } from "@/types/character";
 
-interface PageProps {
-  params: { characterId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
+export default function GamePage({
+  params,
+}: {
+  params: Promise<{ characterId: string }>;
+}) {
+  const { characterId } = use(params);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const { character, fetchCharacter } = useCharacter();
+  const [isLoading, setIsLoading] = useState(true);
 
-export default async function Page(props: PageProps) {
-  const params = await props.params;
-  const session = await getServerSession(authOptions);
+  useEffect(() => {
+    let mounted = true;
 
-  if (!session?.user?.id) {
-    redirect("/");
+    async function initializeGame() {
+      if (status === "unauthenticated") {
+        router.push("/");
+        return;
+      }
+
+      if (status === "authenticated") {
+        try {
+          await fetchCharacter(characterId);
+          if (mounted) {
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error("Error fetching character:", error);
+          router.push("/dashboard");
+        }
+      }
+    }
+
+    initializeGame();
+
+    return () => {
+      mounted = false;
+    };
+  }, [status, characterId, router, fetchCharacter]);
+
+  // Add check for character death
+  useEffect(() => {
+    if (character?.isDead) {
+      router.push("/dashboard");
+      return;
+    }
+  }, [character, router]);
+
+  if (status === "loading" || isLoading) {
+    return <Loader fullScreen className="h-8 w-8" />;
   }
 
-  const character = await prisma.character.findUnique({
-    where: {
-      id: params.characterId,
-      userId: session.user.id,
-    },
-    include: {
-      equipment: true,
-      powers: true,
-    },
-  });
-
   if (!character) {
-    redirect("/dashboard");
+    return null;
   }
 
   return (
@@ -42,9 +74,9 @@ export default async function Page(props: PageProps) {
         deck: [],
         hand: [],
         discardPile: [],
-        equipment: character.equipment.map((eq) => ({
+        equipment: (character.equipment || []).map((eq) => ({
           ...eq,
-          stats: eq.stats as ItemStats, // Transform JsonValue to ItemStats
+          stats: eq.stats as ItemStats,
         })),
       }}
     />
