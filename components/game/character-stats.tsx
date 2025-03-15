@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { GameState } from "@/lib/game/game-state";
 import { useCharacter } from "@/context/character-context";
 import { Character } from "@/types/character";
+import EquipmentModal from "./equipment-modal";
 
 interface CharacterStatsProps {
   gameState?: GameState;
@@ -14,6 +15,7 @@ export default function CharacterStats({
 }: CharacterStatsProps) {
   const { character: contextCharacter } = useCharacter();
   const character = propCharacter || contextCharacter;
+  const [showEquipment, setShowEquipment] = useState(false);
 
   if (!character) return null;
 
@@ -23,88 +25,115 @@ export default function CharacterStats({
   const experiencePercentage = character.experience % 100;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg border border-gray-200">
-      <div className="flex items-center p-3 gap-4">
-        {/* Character Info */}
-        <div className="flex-shrink-0 border-r border-gray-200 pr-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medievalsharp text-lg text-gray-800">
-              {character.name}
-            </h3>
-            <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
-              Lvl {character.level}
-            </span>
-          </div>
-          <div className="text-xs text-gray-600 mt-1">{character.class}</div>
-        </div>
-
-        {/* Main Stats */}
-        <div className="flex-grow space-y-2 min-w-[200px]">
-          {/* Health */}
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-gray-600">Health</span>
-              <span className="text-gray-900">
-                {currentHealth}/{character.maxHealth}
+    <>
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div className="flex items-center p-3 gap-4">
+          {/* Character Info */}
+          <div className="flex-shrink-0 border-r border-gray-200 pr-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medievalsharp text-lg text-gray-800">
+                {character.name}
+              </h3>
+              <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
+                Lvl {character.level}
               </span>
+              <button
+                onClick={() => setShowEquipment(true)}
+                className="ml-2 p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                title="View Equipment"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                  />
+                </svg>
+              </button>
             </div>
-            <div className="h-1.5 bg-gray-100 rounded-full">
-              <div
-                className="h-full bg-red-500 rounded-full transition-all duration-300"
-                style={{ width: `${healthPercentage}%` }}
-              />
+            <div className="text-xs text-gray-600 mt-1">{character.class}</div>
+          </div>
+
+          {/* Main Stats */}
+          <div className="flex-grow space-y-2 min-w-[200px]">
+            {/* Health */}
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-600">Health</span>
+                <span className="text-gray-900">
+                  {currentHealth}/{character.maxHealth}
+                </span>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full">
+                <div
+                  className="h-full bg-red-500 rounded-full transition-all duration-300"
+                  style={{ width: `${healthPercentage}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Experience */}
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-600">EXP</span>
+                <span className="text-gray-900">{character.experience}</span>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full">
+                <div
+                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                  style={{ width: `${experiencePercentage}%` }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Experience */}
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-gray-600">EXP</span>
-              <span className="text-gray-900">{character.experience}</span>
+          {/* Combat Stats */}
+          {gameState && (
+            <div className="flex gap-3 flex-shrink-0 border-l border-gray-200 pl-4">
+              <div className="bg-blue-50 px-3 py-2 rounded">
+                <div className="text-xs text-blue-700">Block</div>
+                <div className="text-sm text-blue-900 font-bold">
+                  {gameState.block}
+                </div>
+              </div>
+              <div className="bg-amber-50 px-3 py-2 rounded">
+                <div className="text-xs text-amber-700">Energy</div>
+                <div className="text-sm text-amber-900 font-bold">
+                  {gameState.currentEnergy}/{gameState.maxEnergy}
+                </div>
+              </div>
             </div>
-            <div className="h-1.5 bg-gray-100 rounded-full">
-              <div
-                className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                style={{ width: `${experiencePercentage}%` }}
-              />
-            </div>
-          </div>
-        </div>
+          )}
 
-        {/* Combat Stats */}
-        {gameState && (
+          {/* Additional Stats */}
           <div className="flex gap-3 flex-shrink-0 border-l border-gray-200 pl-4">
-            <div className="bg-blue-50 px-3 py-2 rounded">
-              <div className="text-xs text-blue-700">Block</div>
-              <div className="text-sm text-blue-900 font-bold">
-                {gameState.block}
+            <div className="bg-yellow-50 px-3 py-2 rounded">
+              <div className="text-xs text-yellow-700">Gold</div>
+              <div className="text-sm text-yellow-900 font-bold">
+                {character.gold}
               </div>
             </div>
-            <div className="bg-amber-50 px-3 py-2 rounded">
-              <div className="text-xs text-amber-700">Energy</div>
-              <div className="text-sm text-amber-900 font-bold">
-                {gameState.currentEnergy}/{gameState.maxEnergy}
+            <div className="bg-purple-50 px-3 py-2 rounded">
+              <div className="text-xs text-purple-700">Kills</div>
+              <div className="text-sm text-purple-900 font-bold">
+                {character.monstersSlain}
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Additional Stats */}
-        <div className="flex gap-3 flex-shrink-0 border-l border-gray-200 pl-4">
-          <div className="bg-yellow-50 px-3 py-2 rounded">
-            <div className="text-xs text-yellow-700">Gold</div>
-            <div className="text-sm text-yellow-900 font-bold">
-              {character.gold}
-            </div>
-          </div>
-          <div className="bg-purple-50 px-3 py-2 rounded">
-            <div className="text-xs text-purple-700">Kills</div>
-            <div className="text-sm text-purple-900 font-bold">
-              {character.monstersSlain}
             </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <EquipmentModal
+        isOpen={showEquipment}
+        onClose={() => setShowEquipment(false)}
+        character={character}
+      />
+    </>
   );
 }

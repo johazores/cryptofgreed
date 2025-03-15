@@ -10,7 +10,7 @@ export interface Character {
   maxHealth: number;
   energy: number;
   gold: number;
-  equipment: any[];
+  equipment: Equipment[];
   powers: any[];
   isDead: boolean;
   block: number;
@@ -35,4 +35,19 @@ export interface Card {
     heal?: number;
     special?: string;
   };
+}
+
+interface ItemStats {
+  attack?: number;
+  defense?: number;
+  health?: number;
+  // ... add other possible stats
+}
+
+interface Equipment {
+  id: string;
+  name: string;
+  description: string;
+  slot: string;
+  stats: ItemStats;
 }

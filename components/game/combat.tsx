@@ -3,7 +3,7 @@ import { GameState, GameManager } from "@/lib/game/game-state";
 import { Enemy, EnemyManager } from "@/lib/game/enemy";
 import { useState, useEffect } from "react";
 import { CombatManager } from "@/lib/game/combat-manager";
-import GameModal from "./modal";
+import GameModal from "./end-battle-modal";
 import CharacterStats from "./character-stats";
 import { useCharacter } from "@/context/character-context";
 

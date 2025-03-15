@@ -1,4 +1,5 @@
 import { useRouter } from "next/navigation";
+import Modal from "../modal";
 
 interface GameModalProps {
   isOpen: boolean;
@@ -29,11 +30,9 @@ export default function GameModal({
   const canAffordRevive =
     userCrystals && crystalCost ? userCrystals >= crystalCost : false;
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl transform animate-fadeIn">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="md">
+      <div className="p-8">
         <h2
           className={`font-medievalsharp text-3xl ${
             type === "victory" ? "text-primary" : "text-red-600"
@@ -132,6 +131,6 @@ export default function GameModal({
             : "Return to Dashboard"}
         </button>
       </div>
-    </div>
+    </Modal>
   );
 }
