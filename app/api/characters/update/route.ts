@@ -49,6 +49,10 @@ export async function POST(req: Request) {
           currentHealth: newMaxHealth,
         }),
       },
+      include: {
+        equipment: true,
+        powers: true,
+      },
     });
 
     return NextResponse.json(updatedCharacter);

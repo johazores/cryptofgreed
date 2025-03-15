@@ -36,7 +36,12 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch("/api/characters");
       if (!response.ok) throw new Error("Failed to fetch characters");
       const data = await response.json();
-      setCharacters(data);
+      // Ensure equipment is properly included in each character
+      const charactersWithEquipment = data.map((char: Character) => ({
+        ...char,
+        equipment: char.equipment || [],
+      }));
+      setCharacters(charactersWithEquipment);
     } catch (error) {
       toast.error("Failed to load characters");
     }
@@ -58,8 +63,13 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       }
 
       const data = await response.json();
-      setCharacter(data);
-      return data;
+      // Ensure equipment is properly included
+      const characterWithEquipment = {
+        ...data,
+        equipment: data.equipment || [],
+      };
+      setCharacter(characterWithEquipment);
+      return characterWithEquipment;
     } catch (error) {
       console.error("Failed to fetch character:", error);
       throw error;
@@ -84,6 +94,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
               gold: updates?.gold ?? undefined,
               experience: updates?.experience ?? undefined,
               monstersSlain: updates?.monstersSlain ?? undefined,
+              equipment: updates?.equipment ?? undefined, // Make sure equipment updates are included
             },
           }),
         });
@@ -94,17 +105,22 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         }
 
         const updatedCharacter = await response.json();
+        // Ensure equipment is properly included in the updated character
+        const characterWithEquipment = {
+          ...updatedCharacter,
+          equipment: updatedCharacter.equipment || [],
+        };
 
         setCharacter((prev) =>
-          prev?.id === characterId ? updatedCharacter : prev
+          prev?.id === characterId ? characterWithEquipment : prev
         );
         setCharacters((prev) =>
           prev.map((char) =>
-            char.id === characterId ? updatedCharacter : char
+            char.id === characterId ? characterWithEquipment : char
           )
         );
 
-        return updatedCharacter;
+        return characterWithEquipment;
       } catch (error) {
         console.error("Error updating character:", error);
         toast.error(

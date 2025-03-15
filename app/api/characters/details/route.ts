@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const character = await prisma.character.findUnique({
       where: {
         id: characterId,
-        userId: session.user.id, // Ensure the character belongs to the user
+        userId: session.user.id,
       },
       include: {
         equipment: true,
