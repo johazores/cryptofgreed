@@ -37,11 +37,10 @@ export interface Card {
   };
 }
 
-interface ItemStats {
+export interface ItemStats {
   attack?: number;
   defense?: number;
   health?: number;
-  // ... add other possible stats
 }
 
 interface Equipment {

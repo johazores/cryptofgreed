@@ -51,7 +51,7 @@ export default function GameModal({
                   +{rewards.gold}
                 </span>
               </div>
-              <div className="flex justify-between items-center mt-2">
+              <div className="flex justify-between items-center">
                 <span className="text-amber-700">Experience</span>
                 <span className="font-bold text-amber-900">
                   +{rewards.experience}

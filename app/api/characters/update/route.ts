@@ -21,6 +21,18 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Calculate new level if experience is being updated
+    let newLevel = character.level;
+    if (updates.experience !== undefined) {
+      // Calculate new level based on total experience
+      newLevel = Math.floor(updates.experience / 100) + 1;
+    }
+
+    // Calculate new maxHealth based on level
+    const baseHealth = 100;
+    const healthPerLevel = 20;
+    const newMaxHealth = baseHealth + (newLevel - 1) * healthPerLevel;
+
     // Update character stats
     const updatedCharacter = await prisma.character.update({
       where: { id: characterId },
@@ -30,10 +42,15 @@ export async function POST(req: Request) {
         currentHealth: updates.currentHealth ?? character.currentHealth,
         isDead: updates.isDead ?? character.isDead,
         monstersSlain: updates.monstersSlain ?? character.monstersSlain,
+        level: newLevel,
+        maxHealth: newMaxHealth,
+        // If leveling up, restore health to new max
+        ...(newLevel > character.level && {
+          currentHealth: newMaxHealth,
+        }),
       },
     });
 
-    // Return the updated character
     return NextResponse.json(updatedCharacter);
   } catch (error) {
     console.error("Error updating character:", error);

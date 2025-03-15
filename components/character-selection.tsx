@@ -96,7 +96,7 @@ const CharacterSelection = ({
 
       <div className="p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between my-4">
           <div className="flex items-center gap-3">
             <div
               className={`

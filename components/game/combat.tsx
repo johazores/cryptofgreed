@@ -6,6 +6,7 @@ import { CombatManager } from "@/lib/game/combat-manager";
 import GameModal from "./end-battle-modal";
 import CharacterStats from "./character-stats";
 import { useCharacter } from "@/context/character-context";
+import { toast } from "sonner";
 
 interface CombatProps {
   onCombatEnd: () => void;
@@ -17,6 +18,7 @@ export default function Combat({ onCombatEnd }: CombatProps) {
     updateCharacterStats,
     markCharacterAsDead,
     reviveCharacter,
+    updateCharacter,
   } = useCharacter();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -25,8 +27,13 @@ export default function Combat({ onCombatEnd }: CombatProps) {
   );
   const [showVictory, setShowVictory] = useState(false);
   const [showDefeat, setShowDefeat] = useState(false);
-  const [rewards, setRewards] = useState({ gold: 0, experience: 0 });
+  const [rewards, setRewards] = useState<{
+    gold: number;
+    experience: number;
+    floor: number;
+  }>({ gold: 0, experience: 0, floor: 1 });
   const [userCrystals, setUserCrystals] = useState(0);
+  const [defeatedEnemies, setDefeatedEnemies] = useState<Enemy[]>([]);
 
   useEffect(() => {
     const fetchUserCrystals = async () => {
@@ -69,36 +76,84 @@ export default function Combat({ onCombatEnd }: CombatProps) {
     setCombatManager(combat);
   }, [character]);
 
+  useEffect(() => {
+    if (gameState?.status === "VICTORY") {
+      setDefeatedEnemies((prev) => [...prev, ...enemies]);
+    }
+  }, [gameState?.status, enemies]);
+
   if (!character) return null;
 
-  const handleCombatVictory = async () => {
-    const goldReward = Math.floor(
-      50 * (gameState?.floor || 1) * (1 + Math.random() * 0.5)
-    );
-    const expReward = Math.floor(
-      25 * (gameState?.floor || 1) * (1 + Math.random() * 0.5)
-    );
-
-    setRewards({
-      gold: goldReward,
-      experience: expReward,
-    });
+  const handleVictory = async () => {
+    if (!character || !gameState) return;
 
     try {
-      // Make sure to use the current monstersSlain value
-      const newMonstersSlain = character.monstersSlain + (enemies?.length || 1);
+      // Calculate rewards with fixed base values
+      const goldReward = Math.floor(Math.random() * 10) + 5;
 
-      await updateCharacterStats(character.id, {
-        gold: character.gold + goldReward,
-        experience: character.experience + expReward,
-        currentHealth:
-          gameState?.character.currentHealth || character.currentHealth,
-        monstersSlain: newMonstersSlain, // Explicitly set the new value
+      // Calculate experience reward based on enemy type and floor level
+      let expReward = 0;
+      defeatedEnemies.forEach((enemy) => {
+        const floorMultiplier = Math.max(1, Math.floor(gameState.floor / 5));
+        if (enemy.isBoss) {
+          expReward += 50 * floorMultiplier;
+        } else if (enemy.isElite) {
+          expReward += 25 * floorMultiplier;
+        } else {
+          expReward += 10 * floorMultiplier;
+        }
+      });
+
+      // Ensure minimum experience reward
+      expReward = Math.max(10, expReward);
+
+      // Calculate new values
+      const newGold = character.gold + goldReward;
+      const newExp = character.experience + expReward;
+
+      console.log("Victory calculation:", {
+        currentExp: character.experience,
+        expReward,
+        newTotalExp: newExp,
+        floor: gameState.floor,
+        defeatedEnemies: defeatedEnemies.map((e) => ({
+          name: e.name,
+          isBoss: e.isBoss,
+          isElite: e.isElite,
+        })),
+      });
+
+      // Update character stats with explicit typing
+      const updatedCharacter = await updateCharacterStats(character.id, {
+        gold: newGold,
+        experience: newExp,
+        currentHealth: gameState.character.currentHealth,
+        monstersSlain: character.monstersSlain + defeatedEnemies.length,
+      });
+
+      if (!updatedCharacter) {
+        throw new Error("Failed to update character stats");
+      }
+
+      // Clear defeated enemies for next combat
+      setDefeatedEnemies([]);
+
+      // Make sure the character context is updated with the new values
+      if (updateCharacter) {
+        await updateCharacter(character.id);
+      }
+
+      // Update the rewards display
+      setRewards({
+        gold: goldReward,
+        experience: expReward,
+        floor: gameState.floor,
       });
 
       setShowVictory(true);
     } catch (error) {
       console.error("Failed to update character:", error);
+      toast.error("Failed to update character stats");
     }
   };
 
@@ -141,6 +196,9 @@ export default function Combat({ onCombatEnd }: CombatProps) {
   };
 
   const handleNextFloor = () => {
+    // Clear defeated enemies for next combat
+    setDefeatedEnemies([]);
+
     // Initialize game state with enhanced character for next floor
     const enhancedCharacter: Character = {
       ...character,
@@ -199,7 +257,7 @@ export default function Combat({ onCombatEnd }: CombatProps) {
 
     // Check game status
     if (updatedGameState.status === "VICTORY") {
-      handleCombatVictory();
+      handleVictory();
     } else if (updatedGameState.status === "DEFEAT") {
       handleCombatDefeat();
     }

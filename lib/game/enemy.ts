@@ -17,13 +17,12 @@ export type Enemy = {
 
 export class EnemyManager {
   static createEnemy(floor: number): Enemy {
-    // Generate enemy based on floor number
-    const isElite = floor % 10 === 0;
-    const isBoss = floor % 15 === 0;
-
-    if (isBoss) {
+    // Determine enemy type based on floor
+    if (floor % 10 === 0) {
+      // Every 10th floor is a boss
       return this.generateBoss(floor);
-    } else if (isElite) {
+    } else if (floor % 5 === 0) {
+      // Every 5th floor is an elite
       return this.generateElite(floor);
     } else {
       return this.generateNormal(floor);
@@ -40,7 +39,7 @@ export class EnemyManager {
         currentHealth: baseHealth,
         block: 0,
         intent: {
-          type: "ATTACK" as const,
+          type: "ATTACK",
           value: 6,
           description: "Intends to attack for 6 damage",
         },

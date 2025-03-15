@@ -13,7 +13,7 @@ interface CharacterContextType {
   updateCharacterStats: (
     characterId: string,
     updates: Partial<Character>
-  ) => Promise<void>;
+  ) => Promise<Character>;
   markCharacterAsDead: (characterId: string) => Promise<void>;
 }
 
@@ -87,7 +87,10 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   );
 
   const updateCharacterStats = useCallback(
-    async (characterId: string, updates: Partial<Character>) => {
+    async (
+      characterId: string,
+      updates: Partial<Character>
+    ): Promise<Character> => {
       try {
         const response = await fetch("/api/characters/update", {
           method: "POST",
@@ -104,7 +107,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
           throw new Error("Failed to update character stats");
         }
 
+        const updatedCharacter = await response.json();
         await updateCharacter(characterId);
+        return updatedCharacter;
       } catch (error) {
         console.error("Failed to update character:", error);
         throw error;
