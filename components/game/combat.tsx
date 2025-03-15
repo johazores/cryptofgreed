@@ -9,6 +9,7 @@ import { useCharacter } from "@/context/character-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import RoomSelectionModal from "./room-selection-modal";
+import Card from "./card";
 
 interface CombatProps {
   onCombatEnd: () => void;
@@ -374,34 +375,13 @@ export default function Combat({ onCombatEnd }: CombatProps) {
           <div className="p-2 md:p-4 overflow-x-auto pb-2 hide-scrollbar h-full">
             <div className="flex gap-2 md:gap-3 min-w-min justify-start md:justify-center h-full">
               {gameState.hand.map((card, index) => (
-                <div
+                <Card
                   key={`${card.id}-${index}`}
-                  onClick={() => handleCardClick(index)}
-                  className={`flex-shrink-0 bg-white p-2 md:p-4 rounded-lg shadow-md border border-gray-200 
-                    w-24 md:w-32 h-full cursor-pointer 
-                    transform transition-all duration-200 hover:-translate-y-2
-                    ${
-                      card.energy > gameState.currentEnergy
-                        ? "opacity-50"
-                        : "hover:shadow-xl"
-                    }`}
-                >
-                  <div className="text-xs md:text-sm font-bold mb-1">
-                    {card.name}
-                  </div>
-                  <div className="text-[10px] md:text-xs text-gray-600">
-                    {card.description}
-                  </div>
-                  <div
-                    className={`text-[10px] md:text-xs mt-1 ${
-                      card.energy > gameState.currentEnergy
-                        ? "text-red-600"
-                        : "text-blue-600"
-                    }`}
-                  >
-                    Energy: {card.energy}
-                  </div>
-                </div>
+                  card={card}
+                  index={index}
+                  currentEnergy={gameState.currentEnergy}
+                  onClick={handleCardClick}
+                />
               ))}
             </div>
           </div>

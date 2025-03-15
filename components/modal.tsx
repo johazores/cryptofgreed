@@ -21,11 +21,24 @@ export default function Modal({
     "2xl": "max-w-2xl",
   };
 
+  // Prevent background scrolling when modal is open
+  if (typeof document !== "undefined") {
+    document.body.style.overflow = "hidden";
+  }
+
+  // Cleanup function to restore scrolling when modal closes
+  const handleClose = () => {
+    if (typeof document !== "undefined") {
+      document.body.style.overflow = "unset";
+    }
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
+        // Remove onClick from backdrop to prevent unwanted closing
       />
       <div
         className={`relative bg-white rounded-xl shadow-2xl ${maxWidthClasses[maxWidth]} w-full mx-4 max-h-[80vh] overflow-y-auto`}
