@@ -3,19 +3,18 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import CharacterCreation from "@/components/character-creation";
-import { Character } from "@/types/character";
 import Loader from "@/components/ui/loader";
 import CharacterStats from "@/components/game/character-stats";
+import { useCharacter } from "@/context/character-context";
 import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const [characters, setCharacters] = useState<Character[]>([]);
+  const { characters, fetchCharacters, reviveCharacter } = useCharacter();
   const [crystals, setCrystals] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Add function to fetch crystal balance
   const fetchCrystals = async () => {
     try {
       const response = await fetch("/api/user/crystals");
@@ -28,7 +27,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Add function to handle character revival
   const handleRevive = async (characterId: string) => {
     if (crystals < 100) {
       toast.error("You need 100 crystals to revive your character");
@@ -36,43 +34,10 @@ export default function DashboardPage() {
     }
 
     try {
-      const response = await fetch("/api/characters/revive", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ characterId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to revive character");
-      }
-
-      // Show success message
-      toast.success("Character revived successfully!");
-
-      // Refresh crystals and characters
-      await Promise.all([fetchCrystals(), fetchCharacters()]);
+      await reviveCharacter(characterId);
+      await fetchCrystals(); // Refresh crystals after revival
     } catch (error) {
-      console.error("Failed to revive character:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to revive character"
-      );
-    }
-  };
-
-  const fetchCharacters = async () => {
-    try {
-      const response = await fetch("/api/characters");
-      if (response.ok) {
-        const data = await response.json();
-        setCharacters(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch characters:", error);
-      toast.error("Failed to load characters");
+      // Error handling is done in the context
     }
   };
 
@@ -86,7 +51,7 @@ export default function DashboardPage() {
     }
 
     initializeData();
-  }, []);
+  }, [fetchCharacters]);
 
   if (loading) {
     return <Loader fullScreen className="h-8 w-8" />;

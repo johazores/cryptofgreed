@@ -1,48 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { Character } from "@/types/character";
+import React from "react";
 import { GameState } from "@/lib/game/game-state";
+import { useCharacter } from "@/context/character-context";
+import { Character } from "@/types/character";
 
 interface CharacterStatsProps {
-  character: Character;
   gameState?: GameState;
+  character?: Character; // Make character optional
 }
 
 export default function CharacterStats({
-  character: initialCharacter,
   gameState,
+  character: propCharacter,
 }: CharacterStatsProps) {
-  const [character, setCharacter] = useState(initialCharacter);
+  const { character: contextCharacter } = useCharacter();
 
-  // useEffect(() => {
-  //   // Update character data every 2 seconds
-  //   const fetchCharacterData = async () => {
-  //     try {
-  //       const response = await fetch(`/api/characters/${initialCharacter.id}`, {
-  //         // Add cache control headers
-  //         headers: {
-  //           "Cache-Control": "no-cache",
-  //           Pragma: "no-cache",
-  //         },
-  //       });
+  // Use provided character prop or fall back to context character
+  const character = propCharacter || contextCharacter;
 
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! status: ${response.status}`);
-  //       }
+  if (!character) return null;
 
-  //       const updatedCharacter = await response.json();
-  //       setCharacter(updatedCharacter);
-  //     } catch (error) {
-  //       console.error("Failed to fetch character data:", error);
-  //     }
-  //   };
-
-  //   const intervalId = setInterval(fetchCharacterData, 2000);
-
-  //   // Clean up interval on unmount
-  //   return () => clearInterval(intervalId);
-  // }, [initialCharacter.id]); // Changed dependency from character.id to initialCharacter.id
-
-  // Use gameState values if available (for in-combat updates), otherwise use character values
   const currentHealth =
     gameState?.character.currentHealth ?? character.currentHealth;
   const healthPercentage = (currentHealth / character.maxHealth) * 100;

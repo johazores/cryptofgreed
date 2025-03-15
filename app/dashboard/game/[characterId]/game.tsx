@@ -1,21 +1,21 @@
 "use client";
-import { useState } from "react";
-import { Character } from "@/types/character";
+import { useEffect } from "react";
 import GameScreen from "@/components/game/game-screen";
 import { useRouter } from "next/navigation";
+import { useCharacter } from "@/context/character-context";
+import { Character } from "@/types/character";
 
 interface GameClientProps {
   initialCharacter: Character;
 }
 
 export default function GameClient({ initialCharacter }: GameClientProps) {
-  const [character] = useState<Character>(initialCharacter);
   const router = useRouter();
+  const { setCharacter } = useCharacter();
 
-  return (
-    <GameScreen
-      character={character}
-      onExit={() => router.push("/dashboard")}
-    />
-  );
+  useEffect(() => {
+    setCharacter(initialCharacter);
+  }, [initialCharacter, setCharacter]);
+
+  return <GameScreen onExit={() => router.push("/dashboard")} />;
 }

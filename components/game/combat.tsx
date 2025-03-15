@@ -5,18 +5,19 @@ import { useState, useEffect } from "react";
 import { CombatManager } from "@/lib/game/combat-manager";
 import GameModal from "./modal";
 import CharacterStats from "./character-stats";
+import { useCharacter } from "@/context/character-context";
 
 interface CombatProps {
-  character: Character;
   onCombatEnd: () => void;
-  onCharacterUpdate?: (updatedCharacter: Character) => void;
 }
 
-export default function Combat({
-  character,
-  onCombatEnd,
-  onCharacterUpdate,
-}: CombatProps) {
+export default function Combat({ onCombatEnd }: CombatProps) {
+  const {
+    character,
+    updateCharacterStats,
+    markCharacterAsDead,
+    reviveCharacter,
+  } = useCharacter();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [combatManager, setCombatManager] = useState<CombatManager | null>(
@@ -27,7 +28,6 @@ export default function Combat({
   const [rewards, setRewards] = useState({ gold: 0, experience: 0 });
   const [userCrystals, setUserCrystals] = useState(0);
 
-  // Fetch user crystals on component mount
   useEffect(() => {
     const fetchUserCrystals = async () => {
       try {
@@ -40,6 +40,36 @@ export default function Combat({
     };
     fetchUserCrystals();
   }, []);
+
+  useEffect(() => {
+    if (!character) return;
+
+    // Initialize game state with enhanced character
+    const enhancedCharacter: Character = {
+      ...character,
+      equipment: character.equipment || [],
+      powers: character.powers || [],
+      block: 0,
+      deck: [],
+      hand: [],
+      discardPile: [],
+    };
+
+    const gameManager = new GameManager(enhancedCharacter);
+    const initialGameState = gameManager.getState();
+
+    // Create an enemy for the current floor
+    const enemy = EnemyManager.createEnemy(initialGameState.floor);
+
+    // Initialize combat manager
+    const combat = new CombatManager(initialGameState, [enemy]);
+
+    setGameState(initialGameState);
+    setEnemies([enemy]);
+    setCombatManager(combat);
+  }, [character]);
+
+  if (!character) return null;
 
   const handleCombatVictory = async () => {
     const goldReward = Math.floor(
@@ -55,45 +85,13 @@ export default function Combat({
     });
 
     try {
-      // Calculate the updated stats
-      const updates = {
+      await updateCharacterStats(character.id, {
         gold: character.gold + goldReward,
         experience: character.experience + expReward,
         currentHealth:
           gameState?.character.currentHealth || character.currentHealth,
         monstersSlain: character.monstersSlain + enemies.length,
-      };
-
-      const response = await fetch("/api/characters/update", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          characterId: character.id,
-          updates,
-        }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to update character stats");
-      }
-
-      const updatedCharacter = await response.json();
-
-      // Update the local character state
-      if (onCharacterUpdate) {
-        onCharacterUpdate({
-          ...updatedCharacter,
-          // Preserve the combat-specific properties
-          equipment: character.equipment || [],
-          powers: character.powers || [],
-          block: 0,
-          deck: [],
-          hand: [],
-          discardPile: [],
-        });
-      }
 
       setShowVictory(true);
     } catch (error) {
@@ -103,24 +101,7 @@ export default function Combat({
 
   const handleCombatDefeat = async () => {
     try {
-      const response = await fetch("/api/characters/update", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          characterId: character.id,
-          updates: {
-            isDead: true,
-            currentHealth: 0,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update character death status");
-      }
-
+      await markCharacterAsDead(character.id);
       setShowDefeat(true);
     } catch (error) {
       console.error("Failed to update character death status:", error);
@@ -129,19 +110,7 @@ export default function Combat({
 
   const handleRevive = async () => {
     try {
-      const response = await fetch("/api/characters/revive", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          characterId: character.id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to revive character");
-      }
+      await reviveCharacter(character.id);
 
       // Reset game state
       const enhancedCharacter = {
@@ -196,32 +165,6 @@ export default function Combat({
     setShowVictory(false);
   };
 
-  useEffect(() => {
-    // Initialize game state with enhanced character
-    const enhancedCharacter: Character = {
-      ...character,
-      equipment: character.equipment || [],
-      powers: character.powers || [],
-      block: 0,
-      deck: [],
-      hand: [],
-      discardPile: [],
-    };
-
-    const gameManager = new GameManager(enhancedCharacter);
-    const initialGameState = gameManager.getState();
-
-    // Create an enemy for the current floor
-    const enemy = EnemyManager.createEnemy(initialGameState.floor);
-
-    // Initialize combat manager
-    const combat = new CombatManager(initialGameState, [enemy]);
-
-    setGameState(initialGameState);
-    setEnemies([enemy]);
-    setCombatManager(combat);
-  }, [character]);
-
   const handleCardClick = (index: number) => {
     if (!gameState || !combatManager) return;
 
@@ -267,7 +210,7 @@ export default function Combat({
     <div className="relative h-[calc(100vh-12rem)] w-full">
       {/* Character Stats Panel */}
       <div className="fixed left-4 bottom-4 z-10">
-        <CharacterStats character={character} gameState={gameState} />
+        <CharacterStats gameState={gameState} />
       </div>
 
       {/* Enemy Area */}

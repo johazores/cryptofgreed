@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, MedievalSharp } from "next/font/google";
 import { NextAuthProvider } from "./providers";
 import { WalletProvider } from "@/context/wallet-connection";
+import { CharacterProvider } from "@/context/character-context";
 import Navbar from "@/components/navbar";
 import "./globals.css";
 
@@ -34,8 +35,10 @@ export default function RootLayout({
       >
         <NextAuthProvider>
           <WalletProvider>
-            <Navbar />
-            <main className="mt-16">{children}</main>
+            <CharacterProvider>
+              <Navbar />
+              <main className="mt-16">{children}</main>
+            </CharacterProvider>
           </WalletProvider>
         </NextAuthProvider>
       </body>
