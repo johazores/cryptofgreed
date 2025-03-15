@@ -85,12 +85,15 @@ export default function Combat({ onCombatEnd }: CombatProps) {
     });
 
     try {
+      // Make sure to use the current monstersSlain value
+      const newMonstersSlain = character.monstersSlain + (enemies?.length || 1);
+
       await updateCharacterStats(character.id, {
         gold: character.gold + goldReward,
         experience: character.experience + expReward,
         currentHealth:
           gameState?.character.currentHealth || character.currentHealth,
-        monstersSlain: character.monstersSlain + enemies.length,
+        monstersSlain: newMonstersSlain, // Explicitly set the new value
       });
 
       setShowVictory(true);

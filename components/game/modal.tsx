@@ -1,3 +1,5 @@
+import { useRouter } from "next/navigation";
+
 interface GameModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,6 +25,7 @@ export default function GameModal({
   crystalCost,
   userCrystals,
 }: GameModalProps) {
+  const router = useRouter();
   const canAffordRevive =
     userCrystals && crystalCost ? userCrystals >= crystalCost : false;
 
@@ -113,6 +116,8 @@ export default function GameModal({
           onClick={() => {
             if (type === "victory" && onNextFloor) {
               onNextFloor();
+            } else {
+              router.push("/dashboard");
             }
             onClose();
           }}
@@ -124,7 +129,7 @@ export default function GameModal({
         >
           {type === "victory"
             ? "Continue to Next Floor"
-            : "Return to Character Selection"}
+            : "Return to Dashboard"}
         </button>
       </div>
     </div>
