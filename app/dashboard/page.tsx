@@ -2,37 +2,8 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import CharacterCreation from "@/components/character-creation";
-
-interface Character {
-  id: string;
-  name: string;
-  class: string;
-  currentHealth: number;
-  maxHealth: number;
-  energy: number;
-  gold: number;
-  equipment: any[];
-  powers: any[];
-  isDead: boolean;
-  block: number;
-  deck: Card[];
-  hand: Card[];
-  discardPile: Card[];
-}
-
-interface Card {
-  id: string;
-  name: string;
-  description: string;
-  type: "ATTACK" | "SKILL" | "POWER";
-  energy: number;
-  effects: {
-    damage?: number;
-    block?: number;
-    heal?: number;
-    special?: string;
-  };
-}
+import { Character } from "@/types/character";
+import Loader from "@/components/ui/loader";
 
 export default function Dashboard() {
   const { data: session } = useSession();
@@ -60,17 +31,8 @@ export default function Dashboard() {
     fetchCharacters();
   }, []);
 
-  const handleCharacterUpdate = (updatedCharacter: Character) => {
-    setCharacters((chars) =>
-      chars.map((char) =>
-        char.id === updatedCharacter.id ? updatedCharacter : char
-      )
-    );
-    setSelectedCharacter(updatedCharacter);
-  };
-
   if (loading) {
-    return <div>Loading...</div>;
+    return <Loader fullScreen className="h-8 w-8" />;
   }
 
   if (selectedCharacter) {
@@ -211,7 +173,7 @@ export default function Dashboard() {
                             >
                               <path
                                 fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 001.414-1.414L10 8.586 8.707 7.293z"
                                 clipRule="evenodd"
                               />
                             </svg>

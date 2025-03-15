@@ -1,14 +1,16 @@
 "use client";
-
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Button from "@/components/ui/button";
+import Loader from "@/components/ui/loader";
 
 type AuthMode = "login" | "register";
 
 export default function Auth() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [mode, setMode] = useState<AuthMode>("login");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,8 +21,15 @@ export default function Auth() {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return null; // or a loading spinner
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (session) {
+      router.push("/dashboard");
+    }
+  }, [session, router]);
+
+  if (!mounted || status === "loading" || session) {
+    return <Loader fullScreen className="h-8 w-8" />;
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
