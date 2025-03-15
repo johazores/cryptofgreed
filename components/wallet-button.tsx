@@ -10,6 +10,7 @@ export default function WalletButton() {
     walletAddress,
     isConnecting,
     error,
+    balance,
     connectWallet,
     disconnectWallet,
   } = useWallet();
@@ -88,13 +89,18 @@ export default function WalletButton() {
         {isConnecting
           ? "Connecting..."
           : walletAddress
-          ? formatAddress(walletAddress)
+          ? `${formatAddress(walletAddress)} (${Number(balance).toFixed(
+              4
+            )} CORE)`
           : "Connect Wallet"}
       </Button>
 
       {showDropdown && walletAddress && (
         <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
           <div className="py-1">
+            <div className="px-4 py-2 text-sm text-gray-700">
+              Balance: {Number(balance).toFixed(4)} CORE
+            </div>
             <button
               onClick={handleSwitchWallet}
               className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"

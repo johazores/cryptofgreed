@@ -8,7 +8,7 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { BrowserProvider, JsonRpcSigner } from "ethers";
+import { BrowserProvider, JsonRpcSigner, formatEther } from "ethers";
 
 interface WalletContextType {
   walletAddress: string | undefined;
@@ -16,6 +16,7 @@ interface WalletContextType {
   signer: JsonRpcSigner | undefined;
   isConnecting: boolean;
   error: string | null;
+  balance: string;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
 }
@@ -28,6 +29,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [signer, setSigner] = useState<JsonRpcSigner>();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [balance, setBalance] = useState<string>("0");
+
+  const fetchBalance = async (address: string, provider: BrowserProvider) => {
+    try {
+      const balance = await provider.getBalance(address);
+      setBalance(formatEther(balance));
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      setBalance("0");
+    }
+  };
 
   const initializeProvider = useCallback(async () => {
     if (typeof window === "undefined" || !window.ethereum) return null;
@@ -52,6 +64,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setProvider(newProvider);
         setSigner(signer);
         setWalletAddress(address);
+        await fetchBalance(address, newProvider);
       }
     } catch (error) {
       console.error("Error checking existing connection:", error);
@@ -86,6 +99,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setProvider(newProvider);
         setSigner(signer);
         setWalletAddress(address);
+        await fetchBalance(address, newProvider);
       }
     } catch (error) {
       console.error("Error connecting wallet:", error);
@@ -131,6 +145,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, [disconnectWallet, checkExistingConnection, walletAddress]);
 
+  useEffect(() => {
+    if (!provider || !walletAddress) return;
+
+    const interval = setInterval(() => {
+      fetchBalance(walletAddress, provider);
+    }, 10000); // Update balance every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [provider, walletAddress]);
+
   return (
     <WalletContext.Provider
       value={{
@@ -139,6 +163,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         signer,
         isConnecting,
         error,
+        balance,
         connectWallet,
         disconnectWallet,
       }}
@@ -148,10 +173,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useWallet() {
+export const useWallet = () => {
   const context = useContext(WalletContext);
   if (context === undefined) {
     throw new Error("useWallet must be used within a WalletProvider");
   }
   return context;
-}
+};
