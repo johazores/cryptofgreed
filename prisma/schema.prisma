@@ -31,6 +31,8 @@ model Character {
   energy        Int            @default(3)
   monstersSlain Int            @default(0)
   isDead        Boolean        @default(false)
+  experience    Int            @default(0)
+  level         Int            @default(1)
   equipment     Equipment[]    // NFT equipment for current run
   powers        Power[]        // Special abilities gained during run
   user          User           @relation(fields: [userId], references: [id])

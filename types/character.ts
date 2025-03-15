@@ -1,7 +1,10 @@
+import { FightingStyle } from "@prisma/client";
+
 export interface Character {
+  experience: number;
   id: string;
   name: string;
-  class: string;
+  class: FightingStyle;
   currentHealth: number;
   maxHealth: number;
   energy: number;
@@ -13,6 +16,10 @@ export interface Character {
   deck: Card[];
   hand: Card[];
   discardPile: Card[];
+  monstersSlain: number;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Card {

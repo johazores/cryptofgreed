@@ -4,14 +4,16 @@ import { useSession } from "next-auth/react";
 import CharacterCreation from "@/components/character-creation";
 import { Character } from "@/types/character";
 import Loader from "@/components/ui/loader";
+import GameScreen from "@/components/game/game-screen";
 
-export default function Dashboard() {
+export default function DashboardPage() {
   const { data: session } = useSession();
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
     null
   );
   const [loading, setLoading] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     async function fetchCharacters() {
@@ -35,6 +37,18 @@ export default function Dashboard() {
     return <Loader fullScreen className="h-8 w-8" />;
   }
 
+  if (isPlaying && selectedCharacter) {
+    return (
+      <GameScreen
+        character={selectedCharacter as unknown as Character}
+        onExit={() => {
+          setIsPlaying(false);
+          setSelectedCharacter(null);
+        }}
+      />
+    );
+  }
+
   if (selectedCharacter) {
     return (
       <div className="container mx-auto p-8">
@@ -44,6 +58,18 @@ export default function Dashboard() {
         >
           ← Back to Characters
         </button>
+
+        <div className="text-center">
+          <h2 className="font-medievalsharp text-2xl mb-4">
+            {selectedCharacter.name}
+          </h2>
+          <button
+            onClick={() => setIsPlaying(true)}
+            className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medievalsharp text-lg"
+          >
+            Start New Run
+          </button>
+        </div>
       </div>
     );
   }
