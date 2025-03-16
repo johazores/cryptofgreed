@@ -3,16 +3,16 @@ import { GameState, GameManager } from "@/lib/game/game-state";
 import { Enemy, EnemyManager } from "@/lib/game/enemy";
 import { useState, useEffect } from "react";
 import { CombatManager } from "@/lib/game/combat-manager";
-import GameModal from "./end-battle-modal";
-import CharacterStats from "./character-stats";
+import GameModal from "../end-battle-modal";
+import CharacterStats from "../character-stats";
 import { useCharacter } from "@/context/character-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import RoomSelectionModal from "./room-selection-modal";
-import Card from "./card";
+import Card from "../card";
 
 interface CombatProps {
   onCombatEnd: () => void;
+  onExit: () => void;
 }
 
 enum RoomType {
@@ -22,7 +22,7 @@ enum RoomType {
   EVENT = "EVENT",
 }
 
-export default function Combat({ onCombatEnd }: CombatProps) {
+export default function Combat({ onCombatEnd, onExit }: CombatProps) {
   const { character, updateCharacter, markCharacterAsDead, reviveCharacter } =
     useCharacter();
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -303,119 +303,125 @@ export default function Combat({ onCombatEnd }: CombatProps) {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] md:h-[calc(100vh-12rem)] w-full pb-[280px] md:pb-32">
-      {/* Enemy Area */}
-      <div className="flex flex-wrap justify-center gap-2 md:gap-4 p-4 md:p-8 mb-[100px]">
-        {enemies.map((enemy, index) => (
-          <div
-            key={enemy.id}
-            className="bg-white p-3 md:p-6 rounded-xl shadow-lg border border-gray-200 w-full md:w-auto max-w-[280px]"
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="container mx-auto px-2 md:px-4">
+        <div className="flex justify-end py-2 md:py-4">
+          <button
+            onClick={onExit}
+            className="px-3 md:px-4 py-1.5 md:py-2 bg-primary hover:bg-primary-dark text-white rounded text-sm md:text-base"
           >
-            <div className="text-lg md:text-xl font-bold mb-2">
-              {enemy.name}
+            Exit Game
+          </button>
+        </div>
+        <div className="relative min-h-[calc(100vh-4rem)] md:h-[calc(100vh-12rem)] w-full pb-[280px] md:pb-32">
+          {/* Enemy Area */}
+          <div className="flex flex-wrap justify-center gap-2 md:gap-4 p-4 md:p-8 mb-[100px]">
+            {enemies.map((enemy, index) => (
+              <div
+                key={enemy.id}
+                className="bg-white p-3 md:p-6 rounded-xl shadow-lg border border-gray-200 w-full md:w-auto max-w-[280px]"
+              >
+                <div className="text-lg md:text-xl font-bold mb-2">
+                  {enemy.name}
+                </div>
+                <div className="space-y-2">
+                  {/* Enemy Health */}
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>HP</span>
+                      <span>
+                        {enemy.currentHealth}/{enemy.maxHealth}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full">
+                      <div
+                        className="h-full bg-red-500 rounded-full"
+                        style={{
+                          width: `${
+                            (enemy.currentHealth / enemy.maxHealth) * 100
+                          }%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom UI Container */}
+          <div className="fixed bottom-0 left-0 right-0 z-10">
+            {/* Character Stats Panel */}
+            <div className="px-2 md:px-4 mb-2">
+              <CharacterStats gameState={gameState} />
             </div>
-            <div className="space-y-2">
-              {/* Enemy Health */}
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>HP</span>
-                  <span>
-                    {enemy.currentHealth}/{enemy.maxHealth}
-                  </span>
+
+            {/* Hand Area */}
+            <div className="h-36 md:h-48 bg-gradient-to-t from-gray-900/20 to-transparent">
+              <div className="p-2 md:p-4 overflow-x-auto pb-2 hide-scrollbar h-full">
+                <div className="flex gap-2 md:gap-3 min-w-min justify-start md:justify-center h-full">
+                  {gameState.hand.map((card, index) => (
+                    <Card
+                      key={`${card.id}-${index}`}
+                      card={card}
+                      index={index}
+                      currentEnergy={gameState.currentEnergy}
+                      onClick={handleCardClick}
+                    />
+                  ))}
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full">
-                  <div
-                    className="h-full bg-red-500 rounded-full"
-                    style={{
-                      width: `${
-                        (enemy.currentHealth / enemy.maxHealth) * 100
-                      }%`,
-                    }}
-                  />
-                </div>
+              </div>
+
+              {/* End Turn Button - Moved inside hand area */}
+              <div className="absolute right-2 md:right-4 bottom-2 md:bottom-4">
+                <button
+                  onClick={handleEndTurn}
+                  className="px-4 md:px-6 py-2 md:py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medievalsharp text-base md:text-lg shadow-lg transition-all duration-200 hover:shadow-xl"
+                >
+                  End Turn
+                </button>
               </div>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Bottom UI Container */}
-      <div className="fixed bottom-0 left-0 right-0 z-10">
-        {/* Character Stats Panel */}
-        <div className="px-2 md:px-4 mb-2">
-          <CharacterStats gameState={gameState} />
+          {/* Add this CSS to your global styles */}
+          <style jsx global>{`
+            .hide-scrollbar {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
+            .hide-scrollbar::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+
+          <GameModal
+            isOpen={showVictory}
+            onClose={() => {
+              setShowVictory(false);
+              onCombatEnd();
+            }}
+            type="victory"
+            rewards={{
+              gold: rewards.gold,
+              experience: rewards.experience,
+              floor: gameState?.floor || 1,
+            }}
+            onNextFloor={handleNextFloor}
+          />
+          <GameModal
+            isOpen={showDefeat}
+            onClose={() => {
+              setShowDefeat(false);
+              onCombatEnd();
+            }}
+            type="defeat"
+            onRevive={handleRevive}
+            crystalCost={100}
+            userCrystals={userCrystals}
+          />
         </div>
-
-        {/* Hand Area */}
-        <div className="h-36 md:h-48 bg-gradient-to-t from-gray-900/20 to-transparent">
-          <div className="p-2 md:p-4 overflow-x-auto pb-2 hide-scrollbar h-full">
-            <div className="flex gap-2 md:gap-3 min-w-min justify-start md:justify-center h-full">
-              {gameState.hand.map((card, index) => (
-                <Card
-                  key={`${card.id}-${index}`}
-                  card={card}
-                  index={index}
-                  currentEnergy={gameState.currentEnergy}
-                  onClick={handleCardClick}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* End Turn Button - Moved inside hand area */}
-          <div className="absolute right-2 md:right-4 bottom-2 md:bottom-4">
-            <button
-              onClick={handleEndTurn}
-              className="px-4 md:px-6 py-2 md:py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medievalsharp text-base md:text-lg shadow-lg transition-all duration-200 hover:shadow-xl"
-            >
-              End Turn
-            </button>
-          </div>
-        </div>
       </div>
-
-      {/* Add this CSS to your global styles */}
-      <style jsx global>{`
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
-
-      <RoomSelectionModal
-        isOpen={showRoomSelection}
-        onClose={() => setShowRoomSelection(false)}
-        onSelectRoom={handleRoomSelection}
-        availableRooms={availableRooms}
-      />
-      <GameModal
-        isOpen={showVictory}
-        onClose={() => {
-          setShowVictory(false);
-          onCombatEnd();
-        }}
-        type="victory"
-        rewards={{
-          gold: rewards.gold,
-          experience: rewards.experience,
-          floor: gameState?.floor || 1,
-        }}
-        onNextFloor={handleNextFloor}
-      />
-      <GameModal
-        isOpen={showDefeat}
-        onClose={() => {
-          setShowDefeat(false);
-          onCombatEnd();
-        }}
-        type="defeat"
-        onRevive={handleRevive}
-        crystalCost={100}
-        userCrystals={userCrystals}
-      />
     </div>
   );
 }

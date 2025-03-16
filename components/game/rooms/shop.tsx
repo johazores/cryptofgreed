@@ -1,11 +1,13 @@
 "use client";
 import { useCharacter } from "@/context/character-context";
-import { useRouter } from "next/navigation";
-import { handleContinueToNextRoom } from "@/lib/game/room-navigation";
-import CharacterStats from "./character-stats";
+import CharacterStats from "../character-stats";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ItemTier, EquipmentSlot } from "@prisma/client";
+
+interface ShopProps {
+  onContinue: () => void;
+}
 
 interface ShopItem {
   id: string;
@@ -21,11 +23,9 @@ interface ShopItem {
   };
 }
 
-export default function Shop() {
+export default function Shop({ onContinue }: ShopProps) {
   const { character, updateCharacter } = useCharacter();
-  const router = useRouter();
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
-  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
     // Generate shop items based on character's floor level
@@ -109,14 +109,6 @@ export default function Shop() {
     }
   };
 
-  const handleContinue = () => {
-    setIsLeaving(true);
-    // Add a small delay before navigation to allow the user to see the purchase result
-    setTimeout(() => {
-      handleContinueToNextRoom(character, router);
-    }, 500);
-  };
-
   if (!character) return null;
 
   return (
@@ -145,9 +137,9 @@ export default function Shop() {
             </div>
             <button
               onClick={() => handlePurchase(item)}
-              disabled={!character || character.gold < item.price || isLeaving}
+              disabled={!character || character.gold < item.price}
               className={`w-full p-2 rounded ${
-                character && character.gold >= item.price && !isLeaving
+                character && character.gold >= item.price
                   ? "bg-primary hover:bg-primary-dark text-white"
                   : "bg-gray-300 cursor-not-allowed text-gray-600"
               }`}
@@ -158,11 +150,10 @@ export default function Shop() {
         ))}
       </div>
       <button
-        onClick={handleContinue}
-        disabled={isLeaving}
-        className="w-full p-4 bg-primary hover:bg-primary-dark text-white rounded-lg"
+        onClick={onContinue}
+        className="w-full mt-4 p-4 bg-primary hover:bg-primary-dark text-white rounded-lg"
       >
-        Continue to Next Floor
+        Leave Shop
       </button>
     </div>
   );

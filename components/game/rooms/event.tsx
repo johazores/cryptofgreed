@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
 import { useCharacter } from "@/context/character-context";
-import { useRouter } from "next/navigation";
-import { handleContinueToNextRoom } from "@/lib/game/room-navigation";
 
-export default function Event() {
+interface EventProps {
+  onContinue: () => void;
+}
+
+export default function Event({ onContinue }: EventProps) {
   const { character } = useCharacter();
-  const router = useRouter();
   const [event, setEvent] = useState(generateRandomEvent());
   const [eventCompleted, setEventCompleted] = useState(false);
 
@@ -29,7 +30,7 @@ export default function Event() {
 
   const handleOptionSelect = (optionIndex: number) => {
     setEventCompleted(true);
-    setTimeout(() => handleContinueToNextRoom(character, router), 1500);
+    setTimeout(onContinue, 1500);
   };
 
   return (
@@ -49,7 +50,7 @@ export default function Event() {
           ))}
         {eventCompleted && (
           <button
-            onClick={() => handleContinueToNextRoom(character, router)}
+            onClick={onContinue}
             className="w-full p-4 bg-primary hover:bg-primary-dark text-white rounded-lg"
           >
             Continue to Next Floor

@@ -22,6 +22,7 @@ interface RoomSelectionModalProps {
   onClose: () => void;
   onSelectRoom: (roomType: RoomType) => void;
   availableRooms: RoomType[];
+  currentFloor?: number; // Add this prop
 }
 
 export default function RoomSelectionModal({
@@ -29,6 +30,7 @@ export default function RoomSelectionModal({
   onClose,
   onSelectRoom,
   availableRooms,
+  currentFloor = 1, // Default to floor 1 if not provided
 }: RoomSelectionModalProps) {
   const roomOptions: Record<RoomType, RoomOption> = {
     [RoomType.BATTLE]: {
@@ -61,7 +63,7 @@ export default function RoomSelectionModal({
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-6">
         <h2 className="text-2xl font-medievalsharp mb-4 text-center">
-          Choose Your Path
+          Floor {currentFloor} - Choose Your Path
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {availableRooms.map((roomType) => {

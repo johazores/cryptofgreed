@@ -1,5 +1,11 @@
-import Combat from "./combat";
+import Combat from "./rooms/combat";
+import RestSite from "./rooms/rest-site";
+import Shop from "./rooms/shop";
+import Event from "./rooms/event";
+import RoomSelectionModal from "./room-selection-modal";
 import { useCharacter } from "@/context/character-context";
+import { RoomType } from "@/lib/game/room-manager";
+import { useState } from "react";
 
 interface GameScreenProps {
   onExit: () => void;
@@ -7,22 +13,76 @@ interface GameScreenProps {
 
 export default function GameScreen({ onExit }: GameScreenProps) {
   const { character, updateCharacter } = useCharacter();
+  const [currentRoom, setCurrentRoom] = useState<RoomType>(RoomType.BATTLE);
+  const [showRoomSelection, setShowRoomSelection] = useState(false);
+  const [availableRooms, setAvailableRooms] = useState<RoomType[]>([]);
+
+  const handleContinue = async () => {
+    if (!character) return;
+
+    const nextFloor = (character.floor || 1) + 1;
+
+    // Special case: force rest site every 5 floors
+    if (nextFloor % 5 === 0) {
+      setCurrentRoom(RoomType.REST);
+      return;
+    }
+
+    // Generate 2 random unique room options
+    const possibleRooms = [
+      RoomType.BATTLE,
+      RoomType.REST,
+      RoomType.SHOP,
+      RoomType.EVENT,
+    ];
+    const numberOfChoices = 2;
+    const shuffledRooms = [...possibleRooms].sort(() => Math.random() - 0.5);
+    const selectedRooms = shuffledRooms.slice(0, numberOfChoices);
+
+    setAvailableRooms(selectedRooms);
+    setShowRoomSelection(true);
+  };
+
+  const handleRoomSelection = (selectedRoom: RoomType) => {
+    setShowRoomSelection(false);
+    setCurrentRoom(selectedRoom);
+  };
 
   if (!character) return null;
 
+  const renderRoom = () => {
+    switch (currentRoom) {
+      case RoomType.BATTLE:
+        return (
+          <Combat
+            onExit={onExit}
+            onCombatEnd={() => {
+              updateCharacter(character.id);
+              handleContinue();
+            }}
+          />
+        );
+      case RoomType.REST:
+        return <RestSite onContinue={handleContinue} />;
+      case RoomType.SHOP:
+        return <Shop onContinue={handleContinue} />;
+      case RoomType.EVENT:
+        return <Event onContinue={handleContinue} />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-gray-100">
-      <div className="container mx-auto px-2 md:px-4">
-        <div className="flex justify-end py-2 md:py-4">
-          <button
-            onClick={onExit}
-            className="px-3 md:px-4 py-1.5 md:py-2 bg-primary hover:bg-primary-dark text-white rounded text-sm md:text-base"
-          >
-            Exit Game
-          </button>
-        </div>
-        <Combat onCombatEnd={() => updateCharacter(character.id)} />
-      </div>
-    </div>
+    <>
+      {renderRoom()}
+      <RoomSelectionModal
+        isOpen={showRoomSelection}
+        onClose={() => setShowRoomSelection(false)}
+        onSelectRoom={handleRoomSelection}
+        availableRooms={availableRooms}
+        currentFloor={character.floor || 1}
+      />
+    </>
   );
 }

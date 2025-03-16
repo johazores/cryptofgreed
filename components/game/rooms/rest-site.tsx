@@ -1,12 +1,13 @@
 "use client";
 import { useCharacter } from "@/context/character-context";
-import { useRouter } from "next/navigation";
-import { handleContinueToNextRoom } from "@/lib/game/room-navigation";
-import CharacterStats from "./character-stats";
+import CharacterStats from "../character-stats";
 
-export default function RestSite() {
+interface RestSiteProps {
+  onContinue: () => void;
+}
+
+export default function RestSite({ onContinue }: RestSiteProps) {
   const { character, updateCharacter } = useCharacter();
-  const router = useRouter();
 
   const handleRest = async () => {
     if (!character) return;
@@ -22,7 +23,7 @@ export default function RestSite() {
         currentHealth: newHealth,
       });
 
-      handleContinueToNextRoom(character, router);
+      onContinue();
     } catch (error) {
       console.error("Failed to rest:", error);
     }
