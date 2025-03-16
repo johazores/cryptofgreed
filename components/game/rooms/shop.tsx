@@ -1,9 +1,12 @@
 "use client";
 import { useCharacter } from "@/context/character-context";
 import CharacterStats from "../character-stats";
+import Button from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ItemTier, EquipmentSlot } from "@prisma/client";
+import { GiShop } from "react-icons/gi";
+import Modal from "@/components/modal";
 
 interface ShopProps {
   onContinue: () => void;
@@ -26,6 +29,7 @@ interface ShopItem {
 export default function Shop({ onContinue }: ShopProps) {
   const { character, updateCharacter } = useCharacter();
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   useEffect(() => {
     // Generate shop items based on character's floor level
@@ -109,52 +113,97 @@ export default function Shop({ onContinue }: ShopProps) {
     }
   };
 
+  const handleLeaveShop = () => {
+    setShowLeaveModal(true);
+  };
+
   if (!character) return null;
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-medievalsharp mb-4">Shop</h2>
-      <div className="mb-6">
-        <CharacterStats character={character} />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        {shopItems.map((item) => (
-          <div
-            key={item.id}
-            className="bg-white rounded-lg p-4 shadow-md border border-gray-200"
-          >
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="font-medievalsharp text-lg">{item.name}</h3>
-              <span className="text-yellow-600 font-bold">
-                {item.price} Gold
-              </span>
+    <>
+      <div className="container mx-auto max-w-7xl p-6 h-screen overflow-y-auto">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-primary/10 text-primary">
+                <GiShop className="w-8 h-8" />
+              </div>
+              <h2 className="text-3xl font-medievalsharp">
+                Merchant&apos;s Shop
+              </h2>
             </div>
-            <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-            <div className="text-sm text-gray-700 mb-3">
-              {item.stats.attack && <div>Attack: +{item.stats.attack}</div>}
-              {item.stats.defense && <div>Defense: +{item.stats.defense}</div>}
-              {item.stats.health && <div>Health: +{item.stats.health}</div>}
+            <div className="text-yellow-600 font-medievalsharp text-xl">
+              Gold: {character.gold}
             </div>
-            <button
-              onClick={() => handlePurchase(item)}
-              disabled={!character || character.gold < item.price}
-              className={`w-full p-2 rounded ${
-                character && character.gold >= item.price
-                  ? "bg-primary hover:bg-primary-dark text-white"
-                  : "bg-gray-300 cursor-not-allowed text-gray-600"
-              }`}
-            >
-              Purchase
-            </button>
           </div>
-        ))}
+
+          <div className="mb-6">
+            <CharacterStats character={character} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {shopItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-primary transition-colors duration-200"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="font-medievalsharp text-lg text-gray-900">
+                    {item.name}
+                  </h3>
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-bold">
+                    {item.price} Gold
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm mb-3">{item.description}</p>
+                <div className="text-sm text-gray-700 mb-4 space-y-1">
+                  {item.stats.attack && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-red-600">Attack:</span> +
+                      {item.stats.attack}
+                    </div>
+                  )}
+                  {item.stats.defense && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">Defense:</span> +
+                      {item.stats.defense}
+                    </div>
+                  )}
+                  {item.stats.health && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-600">Health:</span> +
+                      {item.stats.health}
+                    </div>
+                  )}
+                </div>
+                <Button
+                  onClick={() => handlePurchase(item)}
+                  disabled={character.gold < item.price}
+                  fullWidth
+                  variant={character.gold >= item.price ? "primary" : "ghost"}
+                  size="md"
+                >
+                  {character.gold >= item.price
+                    ? "Purchase"
+                    : "Not enough gold"}
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Button
+              onClick={onContinue}
+              variant="primary"
+              fullWidth
+              size="lg"
+              className="font-medievalsharp"
+            >
+              Continue to Next Floor
+            </Button>
+          </div>
+        </div>
       </div>
-      <button
-        onClick={onContinue}
-        className="w-full mt-4 p-4 bg-primary hover:bg-primary-dark text-white rounded-lg"
-      >
-        Leave Shop
-      </button>
-    </div>
+    </>
   );
 }
