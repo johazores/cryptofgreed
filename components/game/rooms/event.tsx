@@ -3,16 +3,41 @@ import { useState } from "react";
 import { useCharacter } from "@/context/character-context";
 import Button from "@/components/ui/button";
 import { MdOutlineQuestionMark } from "react-icons/md";
+import { toast } from "sonner";
 
 interface EventProps {
   onContinue: () => void;
 }
 
 export default function Event({ onContinue }: EventProps) {
-  const { character } = useCharacter();
+  const { character, updateCharacter } = useCharacter();
   const [event, setEvent] = useState(generateRandomEvent());
   const [eventCompleted, setEventCompleted] = useState(false);
   const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null);
+
+  const handleContinue = async () => {
+    if (!character) return;
+
+    try {
+      await updateCharacter(character.id, {
+        floor: (character.floor || 1) + 1,
+      });
+      onContinue();
+    } catch (error) {
+      console.error("Failed to update floor:", error);
+      toast.error("Failed to proceed to next floor");
+    }
+  };
+
+  const handleOptionSelect = async (optionIndex: number) => {
+    setSelectedOutcome(event.options[optionIndex].outcome);
+    setEventCompleted(true);
+
+    // Add a slight delay before continuing to next floor
+    setTimeout(() => {
+      handleContinue();
+    }, 1500);
+  };
 
   function generateRandomEvent() {
     return {
@@ -32,11 +57,6 @@ export default function Event({ onContinue }: EventProps) {
       ],
     };
   }
-
-  const handleOptionSelect = (optionIndex: number) => {
-    setSelectedOutcome(event.options[optionIndex].outcome);
-    setEventCompleted(true);
-  };
 
   return (
     <div className="container mx-auto max-w-4xl p-6">

@@ -3,6 +3,7 @@ import { useCharacter } from "@/context/character-context";
 import CharacterStats from "../character-stats";
 import Button from "@/components/ui/button";
 import { GiCampfire } from "react-icons/gi";
+import { toast } from "sonner";
 
 interface RestSiteProps {
   onContinue: () => void;
@@ -10,6 +11,20 @@ interface RestSiteProps {
 
 export default function RestSite({ onContinue }: RestSiteProps) {
   const { character, updateCharacter } = useCharacter();
+
+  const handleContinue = async () => {
+    if (!character) return;
+
+    try {
+      await updateCharacter(character.id, {
+        floor: (character.floor || 1) + 1,
+      });
+      onContinue();
+    } catch (error) {
+      console.error("Failed to update floor:", error);
+      toast.error("Failed to proceed to next floor");
+    }
+  };
 
   const handleRest = async () => {
     if (!character) return;
@@ -24,7 +39,7 @@ export default function RestSite({ onContinue }: RestSiteProps) {
       await updateCharacter(character.id, {
         currentHealth: newHealth,
       });
-      onContinue();
+      handleContinue(); // Changed from onContinue to handleContinue
     } catch (error) {
       console.error("Failed to rest:", error);
     }

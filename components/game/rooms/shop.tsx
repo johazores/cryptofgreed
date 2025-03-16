@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ItemTier, EquipmentSlot } from "@prisma/client";
 import { GiShop } from "react-icons/gi";
-import Modal from "@/components/modal";
 
 interface ShopProps {
   onContinue: () => void;
@@ -29,7 +28,6 @@ interface ShopItem {
 export default function Shop({ onContinue }: ShopProps) {
   const { character, updateCharacter } = useCharacter();
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   useEffect(() => {
     // Generate shop items based on character's floor level
@@ -113,8 +111,17 @@ export default function Shop({ onContinue }: ShopProps) {
     }
   };
 
-  const handleLeaveShop = () => {
-    setShowLeaveModal(true);
+  const handleContinue = async () => {
+    if (!character) return;
+
+    try {
+      await updateCharacter(character.id, {
+        floor: (character.floor || 1) + 1,
+      });
+      onContinue();
+    } catch (error) {
+      toast.error("Failed to proceed to next floor");
+    }
   };
 
   if (!character) return null;
@@ -191,9 +198,9 @@ export default function Shop({ onContinue }: ShopProps) {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="w-full my-6 pb-10">
             <Button
-              onClick={onContinue}
+              onClick={handleContinue}
               variant="primary"
               fullWidth
               size="lg"

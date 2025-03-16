@@ -118,14 +118,15 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
       // Calculate new values
       const newGold = character.gold + goldReward;
       const newExp = character.experience + expReward;
-      const newMonstersSlain = character.monstersSlain + defeatedEnemies.length;
+      const newMonstersSlain =
+        (character.monstersSlain || 0) + defeatedEnemies.length; // Added default value
 
       // Update character stats
       const updatedCharacter = await updateCharacter(character.id, {
         gold: newGold,
         experience: newExp,
-        currentHealth: Math.max(1, gameState.character.currentHealth), // Ensure health is at least 1
-        monstersSlain: newMonstersSlain,
+        currentHealth: Math.max(1, gameState.character.currentHealth),
+        monstersSlain: newMonstersSlain, // Make sure this field is included
       });
 
       if (!updatedCharacter) {
@@ -187,31 +188,42 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
     }
   };
 
-  const handleNextFloor = () => {
+  const handleNextFloor = async () => {
+    if (!character || !gameState) return;
+
     // Clear defeated enemies for next combat
     setDefeatedEnemies([]);
 
-    const nextFloor = (gameState?.floor || 1) + 1;
+    const nextFloor = (gameState.floor || 1) + 1;
 
-    // Special case: force rest site every 5 floors
-    if (nextFloor % 5 === 0) {
-      router.push(`/dashboard/game/${character.id}/rest`);
-      return;
+    try {
+      await updateCharacter(character.id, {
+        floor: nextFloor,
+      });
+
+      // Special case: force rest site every 5 floors
+      if (nextFloor % 5 === 0) {
+        router.push(`/dashboard/game/${character.id}/rest`);
+        return;
+      }
+
+      // Generate 2 random unique room options
+      const possibleRooms = [
+        RoomType.BATTLE,
+        RoomType.REST,
+        RoomType.SHOP,
+        RoomType.EVENT,
+      ];
+      const numberOfChoices = 2; // Changed from 3 to 2
+      const shuffledRooms = [...possibleRooms].sort(() => Math.random() - 0.5);
+      const selectedRooms = shuffledRooms.slice(0, numberOfChoices);
+
+      setAvailableRooms(selectedRooms);
+      setShowRoomSelection(true);
+    } catch (error) {
+      console.error("Failed to update floor:", error);
+      toast.error("Failed to proceed to next floor");
     }
-
-    // Generate 2 random unique room options
-    const possibleRooms = [
-      RoomType.BATTLE,
-      RoomType.REST,
-      RoomType.SHOP,
-      RoomType.EVENT,
-    ];
-    const numberOfChoices = 2; // Changed from 3 to 2
-    const shuffledRooms = [...possibleRooms].sort(() => Math.random() - 0.5);
-    const selectedRooms = shuffledRooms.slice(0, numberOfChoices);
-
-    setAvailableRooms(selectedRooms);
-    setShowRoomSelection(true);
   };
 
   const handleRoomSelection = (selectedRoom: RoomType) => {
