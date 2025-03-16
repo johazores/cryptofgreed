@@ -118,15 +118,23 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
       // Calculate new values
       const newGold = character.gold + goldReward;
       const newExp = character.experience + expReward;
-      const newMonstersSlain =
-        (character.monstersSlain || 0) + defeatedEnemies.length; // Added default value
+      const currentMonstersSlain = character.monstersSlain || 0;
+      const newMonstersSlain = currentMonstersSlain + enemies.length; // Use enemies.length instead of defeatedEnemies
+
+      // Log the values for debugging
+      console.log("Updating character stats:", {
+        currentMonstersSlain,
+        newMonstersSlain,
+        enemiesDefeated: enemies.length,
+      });
 
       // Update character stats
       const updatedCharacter = await updateCharacter(character.id, {
         gold: newGold,
         experience: newExp,
         currentHealth: Math.max(1, gameState.character.currentHealth),
-        monstersSlain: newMonstersSlain, // Make sure this field is included
+        monstersSlain: newMonstersSlain,
+        floor: gameState.floor, // Make sure to include the current floor
       });
 
       if (!updatedCharacter) {

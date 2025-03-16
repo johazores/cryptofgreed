@@ -20,27 +20,35 @@ export default function GameScreen({ onExit }: GameScreenProps) {
   const handleContinue = async () => {
     if (!character) return;
 
-    const nextFloor = (character.floor || 1) + 1;
+    try {
+      // Update the floor first
+      const nextFloor = (character.floor || 1) + 1;
+      await updateCharacter(character.id, {
+        floor: nextFloor,
+      });
 
-    // Special case: force rest site every 5 floors
-    if (nextFloor % 5 === 0) {
-      setCurrentRoom(RoomType.REST);
-      return;
+      // Special case: force rest site every 5 floors
+      if (nextFloor % 5 === 0) {
+        setCurrentRoom(RoomType.REST);
+        return;
+      }
+
+      // Generate 2 random unique room options
+      const possibleRooms = [
+        RoomType.BATTLE,
+        RoomType.REST,
+        RoomType.SHOP,
+        RoomType.EVENT,
+      ];
+      const numberOfChoices = 2;
+      const shuffledRooms = [...possibleRooms].sort(() => Math.random() - 0.5);
+      const selectedRooms = shuffledRooms.slice(0, numberOfChoices);
+
+      setAvailableRooms(selectedRooms);
+      setShowRoomSelection(true);
+    } catch (error) {
+      console.error("Failed to update floor:", error);
     }
-
-    // Generate 2 random unique room options
-    const possibleRooms = [
-      RoomType.BATTLE,
-      RoomType.REST,
-      RoomType.SHOP,
-      RoomType.EVENT,
-    ];
-    const numberOfChoices = 2;
-    const shuffledRooms = [...possibleRooms].sort(() => Math.random() - 0.5);
-    const selectedRooms = shuffledRooms.slice(0, numberOfChoices);
-
-    setAvailableRooms(selectedRooms);
-    setShowRoomSelection(true);
   };
 
   const handleRoomSelection = (selectedRoom: RoomType) => {
@@ -53,15 +61,7 @@ export default function GameScreen({ onExit }: GameScreenProps) {
   const renderRoom = () => {
     switch (currentRoom) {
       case RoomType.BATTLE:
-        return (
-          <Combat
-            onExit={onExit}
-            onCombatEnd={() => {
-              updateCharacter(character.id);
-              handleContinue();
-            }}
-          />
-        );
+        return <Combat onExit={onExit} onCombatEnd={handleContinue} />;
       case RoomType.REST:
         return <RestSite onContinue={handleContinue} />;
       case RoomType.SHOP:

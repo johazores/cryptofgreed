@@ -35,6 +35,7 @@ model Character {
   isDead        Boolean        @default(false)
   experience    Int            @default(0)
   level         Int            @default(1)
+  floor         Int            @default(1)  // Add this line
   equipment     Equipment[]    // NFT equipment for current run
   powers        Power[]        // Special abilities gained during run
   user          User           @relation(fields: [userId], references: [id])

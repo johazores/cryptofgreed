@@ -12,20 +12,6 @@ interface RestSiteProps {
 export default function RestSite({ onContinue }: RestSiteProps) {
   const { character, updateCharacter } = useCharacter();
 
-  const handleContinue = async () => {
-    if (!character) return;
-
-    try {
-      await updateCharacter(character.id, {
-        floor: (character.floor || 1) + 1,
-      });
-      onContinue();
-    } catch (error) {
-      console.error("Failed to update floor:", error);
-      toast.error("Failed to proceed to next floor");
-    }
-  };
-
   const handleRest = async () => {
     if (!character) return;
 
@@ -39,7 +25,7 @@ export default function RestSite({ onContinue }: RestSiteProps) {
       await updateCharacter(character.id, {
         currentHealth: newHealth,
       });
-      handleContinue(); // Changed from onContinue to handleContinue
+      onContinue(); // This will trigger handleContinue in the parent component
     } catch (error) {
       console.error("Failed to rest:", error);
     }

@@ -15,27 +15,13 @@ export default function Event({ onContinue }: EventProps) {
   const [eventCompleted, setEventCompleted] = useState(false);
   const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null);
 
-  const handleContinue = async () => {
-    if (!character) return;
-
-    try {
-      await updateCharacter(character.id, {
-        floor: (character.floor || 1) + 1,
-      });
-      onContinue();
-    } catch (error) {
-      console.error("Failed to update floor:", error);
-      toast.error("Failed to proceed to next floor");
-    }
-  };
-
   const handleOptionSelect = async (optionIndex: number) => {
     setSelectedOutcome(event.options[optionIndex].outcome);
     setEventCompleted(true);
 
     // Add a slight delay before continuing to next floor
     setTimeout(() => {
-      handleContinue();
+      onContinue(); // This will trigger handleContinue in the parent component
     }, 1500);
   };
 

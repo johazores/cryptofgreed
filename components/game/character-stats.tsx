@@ -23,7 +23,6 @@ export default function CharacterStats({
     gameState?.character.currentHealth ?? character.currentHealth;
   const healthPercentage = (currentHealth / character.maxHealth) * 100;
   const experiencePercentage = character.experience % 100;
-
   return (
     <>
       <div className="bg-white rounded-lg shadow-lg border border-gray-200">

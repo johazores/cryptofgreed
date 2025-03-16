@@ -41,7 +41,8 @@ export async function POST(req: Request) {
         experience: updates.experience ?? character.experience,
         currentHealth: updates.currentHealth ?? character.currentHealth,
         isDead: updates.isDead ?? character.isDead,
-        monstersSlain: updates.monstersSlain ?? character.monstersSlain,
+        monstersSlain: updates.monstersSlain ?? character.monstersSlain, // Make sure this is included
+        floor: updates.floor ?? character.floor, // Make sure floor is included too
         level: newLevel,
         maxHealth: newMaxHealth,
         // If leveling up, restore health to new max

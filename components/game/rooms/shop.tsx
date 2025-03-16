@@ -113,15 +113,7 @@ export default function Shop({ onContinue }: ShopProps) {
 
   const handleContinue = async () => {
     if (!character) return;
-
-    try {
-      await updateCharacter(character.id, {
-        floor: (character.floor || 1) + 1,
-      });
-      onContinue();
-    } catch (error) {
-      toast.error("Failed to proceed to next floor");
-    }
+    onContinue(); // This will trigger handleContinue in the parent component
   };
 
   if (!character) return null;
