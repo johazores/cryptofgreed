@@ -37,14 +37,12 @@ export async function POST(req: Request) {
 
     // Transfer NFT
     const walletService = new WalletService();
-    const privateKey = await decrypt(user.encryptedPrivateKey);
 
     await walletService.transferNFT(
       bankItem.contractAddress,
       bankItem.nftId,
       user.custodialWalletAddress,
-      user.walletAddress,
-      privateKey
+      user.walletAddress
     );
 
     // Remove bank item

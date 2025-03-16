@@ -28,16 +28,11 @@ export async function POST(req: Request) {
       });
 
       if (user?.encryptedPrivateKey) {
-        const privateKey = await decrypt(user.encryptedPrivateKey);
         const walletService = new WalletService();
 
         // Burn all equipped NFTs
         for (const item of character.equipment) {
-          await walletService.burnNFT(
-            item.contractAddress,
-            item.nftId,
-            privateKey
-          );
+          await walletService.burnNFT(item.contractAddress, item.nftId);
         }
       }
 

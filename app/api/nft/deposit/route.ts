@@ -2,48 +2,44 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
+import { WalletService } from "@/lib/wallet";
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id)
+    return new NextResponse("Unauthorized", { status: 401 });
 
-    const { contractAddress, tokenId } = await req.json();
+  const { tokenId } = await req.json();
+  const walletService = new WalletService();
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        walletAddress: true,
-        custodialWalletAddress: true,
-      },
-    });
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      walletAddress: true,
+      custodialWalletAddress: true,
+      encryptedPrivateKey: true,
+    },
+  });
 
-    if (!user?.walletAddress) {
-      return new NextResponse("No external wallet connected", { status: 400 });
-    }
+  await walletService.transferNFT(
+    tokenId,
+    user!.walletAddress!,
+    user!.custodialWalletAddress,
+    user!.encryptedPrivateKey
+  );
 
-    // Create bank item entry
-    await prisma.bankItem.create({
-      data: {
-        userId: session.user.id,
-        nftId: tokenId,
-        contractAddress,
-        name: "NFT Item", // TODO: Fetch metadata from contract
-        description: "NFT Description",
-        slot: "WEAPON", // TODO: Determine from metadata
-        tier: "T1",
-        stats: { damage: 10 }, // TODO: Calculate from metadata
-      },
-    });
+  await prisma.bankItem.create({
+    data: {
+      name: "NFT Item", // You may want to get this from the NFT metadata
+      description: "Deposited NFT", // You may want to get this from the NFT metadata
+      slot: "WEAPON", // You should specify the correct slot type from EquipmentSlot enum
+      tier: "T0", // You should specify the correct tier from ItemTier enum
+      stats: {}, // You should include the actual stats from the NFT
+      userId: session.user.id,
+      nftId: tokenId,
+      contractAddress: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!,
+    },
+  });
 
-    return NextResponse.json({ message: "NFT deposited successfully" });
-  } catch (error) {
-    console.error("NFT deposit error:", error);
-    return new NextResponse(
-      error instanceof Error ? error.message : "Internal Server Error",
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ success: true });
 }

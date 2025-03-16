@@ -1,28 +1,22 @@
 import { ethers } from "ethers";
 import { encrypt } from "@/lib/encryption";
-
+import CryptOfGreedNFT from "@/abis/CryptOfGreedNFT.json";
 export class WalletService {
   private provider: ethers.JsonRpcProvider;
+  private contractAddress: string;
 
   constructor() {
     this.provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
+    this.contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
   }
 
   async generateCustodialWallet() {
-    // Generate a new random wallet
     const wallet = ethers.Wallet.createRandom();
-
-    // Encrypt the private key
     const encryptedPrivateKey = await encrypt(wallet.privateKey);
-
-    return {
-      address: wallet.address,
-      encryptedPrivateKey,
-    };
+    return { address: wallet.address, encryptedPrivateKey };
   }
 
   async transferNFT(
-    contractAddress: string,
     tokenId: string,
     from: string,
     to: string,
@@ -30,21 +24,21 @@ export class WalletService {
   ) {
     const wallet = new ethers.Wallet(privateKey, this.provider);
     const contract = new ethers.Contract(
-      contractAddress,
-      ["function transferFrom(address from, address to, uint256 tokenId)"],
+      this.contractAddress,
+      CryptOfGreedNFT.abi,
       wallet
     );
     return await contract.transferFrom(from, to, tokenId);
   }
 
-  async burnNFT(contractAddress: string, tokenId: string, privateKey: string) {
+  async burnNFT(tokenId: string, privateKey: string) {
     const wallet = new ethers.Wallet(privateKey, this.provider);
     const contract = new ethers.Contract(
-      contractAddress,
-      ["function burn(uint256 tokenId)"],
+      this.contractAddress,
+      CryptOfGreedNFT.abi,
       wallet
     );
-    return await contract.burn(tokenId);
+    return await contract.burnToken(tokenId);
   }
 
   async getNFTs(walletAddress: string) {

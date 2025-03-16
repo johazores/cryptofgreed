@@ -1,29 +1,33 @@
-import { WalletService } from '@/lib/wallet';
+import { WalletService } from "@/lib/wallet";
+import { prisma } from "@/lib/prisma";
+import { decrypt } from "@/lib/encryption";
 
-export class DeathHandler {
-  private walletService: WalletService;
+export async function handleCharacterDeath(
+  characterId: string,
+  userId: string
+) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { encryptedPrivateKey: true },
+  });
 
-  constructor() {
-    this.walletService = new WalletService();
+  const character = await prisma.character.findUnique({
+    where: { id: characterId },
+    include: { equipment: true },
+  });
+
+  if (!character) return;
+
+  const privateKey = await decrypt(user!.encryptedPrivateKey);
+  const walletService = new WalletService();
+
+  // Burn all equipped NFTs
+  for (const item of character.equipment) {
+    await walletService.burnNFT(item.nftId, privateKey);
   }
 
-  async handleCharacterDeath(characterId: string) {
-    try {
-      const response = await fetch('/api/character/death', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to process character death');
-      }
-
-      // Return death summary
-      return await response.json();
-    } catch (error) {
-      console.error('Death handling error:', error);
-      throw error;
-    }
-  }
+  // Clear character equipment
+  await prisma.equipment.deleteMany({
+    where: { characterId },
+  });
 }
