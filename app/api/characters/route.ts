@@ -42,8 +42,9 @@ export async function POST(req: Request) {
             description: "A basic sword, slightly rusty but still sharp",
             slot: "WEAPON",
             tier: "T0",
-            stats: { damage: 5 },
+            stats: { attack: 5 },
             nftId: "starter-sword-001",
+            contractAddress: `${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS}`, // Required field based on schema
           },
         },
       },

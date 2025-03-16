@@ -14,7 +14,6 @@ export async function POST(req: Request) {
 
     const { characterId } = await req.json();
 
-    // Start transaction
     await prisma.$transaction(async (tx) => {
       const character = await tx.character.findUnique({
         where: { id: characterId },
@@ -23,27 +22,34 @@ export async function POST(req: Request) {
 
       if (!character) throw new Error("Character not found");
 
-      // For each equipped NFT
-      for (const item of character.equipment) {
-        const walletService = new WalletService();
-        const user = await tx.user.findUnique({
-          where: { id: character.userId },
-          select: { encryptedPrivateKey: true },
-        });
+      const user = await tx.user.findUnique({
+        where: { id: character.userId },
+        select: { encryptedPrivateKey: true },
+      });
 
-        if (user?.encryptedPrivateKey) {
-          const privateKey = await decrypt(user.encryptedPrivateKey);
-          // Handle NFT transfer logic here
+      if (user?.encryptedPrivateKey) {
+        const privateKey = await decrypt(user.encryptedPrivateKey);
+        const walletService = new WalletService();
+
+        // Burn all equipped NFTs
+        for (const item of character.equipment) {
+          await walletService.burnNFT(
+            item.contractAddress,
+            item.nftId,
+            privateKey
+          );
         }
       }
+
+      // Clear character equipment
+      await tx.equipment.deleteMany({
+        where: { characterId: character.id },
+      });
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error handling character death:", error);
-    return new NextResponse(
-      error instanceof Error ? error.message : "Internal Server Error",
-      { status: 500 }
-    );
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

@@ -27,7 +27,7 @@ model Character {
   id            String         @id @default(auto()) @map("_id") @db.ObjectId
   name          String         @unique
   class         FightingStyle
-  gold          Int            @default(0)  // Resets each run
+  gold          Int            @default(0)
   currentHealth Int            @default(100)
   maxHealth     Int            @default(100)
   energy        Int            @default(3)
@@ -35,7 +35,7 @@ model Character {
   isDead        Boolean        @default(false)
   experience    Int            @default(0)
   level         Int            @default(1)
-  floor         Int            @default(1)  // Add this line
+  floor         Int            @default(1) 
   equipment     Equipment[]    // NFT equipment for current run
   powers        Power[]        // Special abilities gained during run
   user          User           @relation(fields: [userId], references: [id])
@@ -51,17 +51,18 @@ enum FightingStyle {
 }
 
 model Equipment {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String
-  slot        EquipmentSlot
-  tier        ItemTier
-  stats       Json        // {"hp": 20, "armor": 5, "damage": 10, etc}
-  nftId       String      // NFT reference
-  character   Character?  @relation(fields: [characterId], references: [id])
-  characterId String?     @db.ObjectId
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String
+  slot            EquipmentSlot
+  tier            ItemTier
+  stats           Json          // {"hp": 20, "armor": 5, "damage": 10, etc}
+  contractAddress String        // NFT contract address
+  nftId           String        // NFT reference
+  character       Character?    @relation(fields: [characterId], references: [id])
+  characterId     String?      @db.ObjectId
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 }
 
 model BankItem {

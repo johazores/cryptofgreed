@@ -44,7 +44,7 @@ export interface ItemStats {
   health?: number;
 }
 
-interface Equipment {
+export interface Equipment {
   id: string;
   name: string;
   description: string;

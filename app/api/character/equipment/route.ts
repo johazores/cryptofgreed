@@ -16,6 +16,8 @@ interface EquipmentRequest {
       defense?: number;
       health?: number;
     };
+    nftId: string;
+    contractAddress: string;
   };
 }
 
@@ -51,7 +53,8 @@ export async function POST(req: Request) {
         tier: equipment.tier,
         stats: equipment.stats,
         characterId: characterId,
-        nftId: `${equipment.tier}-${equipment.slot}-${Date.now()}`, // Generate a temporary NFT ID
+        nftId: equipment.nftId,
+        contractAddress: equipment.contractAddress,
       },
     });
 
