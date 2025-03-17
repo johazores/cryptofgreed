@@ -167,7 +167,7 @@ const Shop: React.FC = () => {
           </div>
 
           <Tabs defaultValue="cards">
-            <TabsList className="mb-4 grid w-full grid-cols-3">
+            <TabsList className="mb-2 grid w-full grid-cols-3">
               <TabsTrigger value="cards">Cards</TabsTrigger>
               <TabsTrigger value="potions">Potions</TabsTrigger>
               <TabsTrigger value="equipment">Equipment</TabsTrigger>
