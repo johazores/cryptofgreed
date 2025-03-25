@@ -9,6 +9,7 @@ import { useCharacter } from "@/context/character-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Card from "../card";
+import { Skull } from "lucide-react";
 
 interface CombatProps {
   onCombatEnd: () => void;
@@ -23,13 +24,10 @@ enum RoomType {
 }
 
 export default function Combat({ onCombatEnd, onExit }: CombatProps) {
-  const { character, updateCharacter, markCharacterAsDead, reviveCharacter } =
-    useCharacter();
+  const { character, updateCharacter, markCharacterAsDead, reviveCharacter } = useCharacter();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
-  const [combatManager, setCombatManager] = useState<CombatManager | null>(
-    null
-  );
+  const [combatManager, setCombatManager] = useState<CombatManager | null>(null);
   const [showVictory, setShowVictory] = useState(false);
   const [showDefeat, setShowDefeat] = useState(false);
   const [rewards, setRewards] = useState<{
@@ -216,12 +214,7 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
       }
 
       // Generate 2 random unique room options
-      const possibleRooms = [
-        RoomType.BATTLE,
-        RoomType.REST,
-        RoomType.SHOP,
-        RoomType.EVENT,
-      ];
+      const possibleRooms = [RoomType.BATTLE, RoomType.REST, RoomType.SHOP, RoomType.EVENT];
       const numberOfChoices = 2; // Changed from 3 to 2
       const shuffledRooms = [...possibleRooms].sort(() => Math.random() - 0.5);
       const selectedRooms = shuffledRooms.slice(0, numberOfChoices);
@@ -318,6 +311,12 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
     }
   };
 
+  const getHealthBarColor = (percentage: number) => {
+    if (percentage > 66) return "bg-gradient-to-r from-red-600 to-red-500";
+    if (percentage > 33) return "bg-gradient-to-r from-yellow-600 to-yellow-500";
+    return "bg-gradient-to-r from-red-800 to-red-700";
+  };
+
   if (!gameState || !combatManager) {
     return <div>Loading...</div>;
   }
@@ -325,41 +324,36 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="container mx-auto px-2 md:px-4">
-        <div className="flex justify-end py-2 md:py-4">
-          <button
-            onClick={onExit}
-            className="px-3 md:px-4 py-1.5 md:py-2 bg-primary hover:bg-primary-dark text-white rounded text-sm md:text-base"
-          >
-            Exit Game
-          </button>
-        </div>
         <div className="relative min-h-[calc(100vh-4rem)] md:h-[calc(100vh-12rem)] w-full pb-[280px] md:pb-32">
           {/* Enemy Area */}
-          <div className="flex flex-wrap justify-center gap-2 md:gap-4 p-4 md:p-8 mb-[100px]">
+          <div className="flex flex-wrap justify-center gap-4 md:gap-4 p-4 md:p-8 mb-[100px]">
             {enemies.map((enemy, index) => (
               <div
                 key={enemy.id}
-                className="bg-white p-3 md:p-6 rounded-xl shadow-lg border border-gray-200 w-full md:w-auto max-w-[280px]"
+                className="relative w-full max-w-xs p-2 bg-gradient-to-b from-gray-500 to-gray-700 rounded-xl border border-gray-700 shadow-lg overflow-hidden pb-4"
               >
-                <div className="text-lg md:text-xl font-bold mb-2">
-                  {enemy.name}
+                <div className="flex justify-between items-center text-lg md:text-xl font-bold mb-2 text-white">
+                  <span>{enemy.name}</span>
+                  <span className="bg-gray-700/50 rounded-full p-1.5">
+                    <Skull className="h-5 w-5 text-red-400" />
+                  </span>
                 </div>
+
                 <div className="space-y-2">
-                  {/* Enemy Health */}
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>HP</span>
-                      <span>
+                  <div className="pt-4 pb-2">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-sm font-medium text-white">HP</span>
+                      <span className="text-sm font-medium text-white">
                         {enemy.currentHealth}/{enemy.maxHealth}
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full">
+                    <div className="h-3 bg-gray-700/60 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-red-500 rounded-full"
+                        className={`h-full transition-all duration-300 rounded-full ${getHealthBarColor(
+                          (enemy.currentHealth / enemy.maxHealth) * 100
+                        )}`}
                         style={{
-                          width: `${
-                            (enemy.currentHealth / enemy.maxHealth) * 100
-                          }%`,
+                          width: `${(enemy.currentHealth / enemy.maxHealth) * 100}%`,
                         }}
                       />
                     </div>
@@ -392,8 +386,17 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
                 </div>
               </div>
 
-              {/* End Turn Button - Moved inside hand area */}
-              <div className="absolute right-2 md:right-4 bottom-2 md:bottom-4">
+              {/* Button Container */}
+              <div className="absolute bottom-2 md:bottom-4 left-0 right-0 flex justify-between px-2 md:px-4">
+                {/* Exit Button */}
+                <button
+                  onClick={onExit}
+                  className="px-3 md:px-4 py-1.5 md:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm md:text-base transition-colors duration-200"
+                >
+                  Exit Game
+                </button>
+
+                {/* End Turn Button */}
                 <button
                   onClick={handleEndTurn}
                   className="px-4 md:px-6 py-2 md:py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medievalsharp text-base md:text-lg shadow-lg transition-all duration-200 hover:shadow-xl"
