@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button";
 import WalletButton from "@/components/wallet-button";
+import { Skull } from "lucide-react";
 
 type MenuItem = {
   label: string;
@@ -54,11 +55,7 @@ export default function Navbar() {
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center space-x-1">
               <div className="relative w-8 h-8">
-                <img
-                  src="/images/logo.svg"
-                  alt="Logo"
-                  className="w-full h-full object-contain"
-                />
+                <Skull className="w-full h-full object-contain text-primary" />
               </div>
               <span className="text-xl font-semibold text-primary">
                 Crypt of Greed
