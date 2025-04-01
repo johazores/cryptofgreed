@@ -284,8 +284,17 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
     const targetIndex = 0;
 
     if (combatManager.playCard(index, targetIndex)) {
-      setGameState({ ...combatManager.getState() });
-      setEnemies([...combatManager.getCombatState().enemies]);
+      const updatedGameState = { ...combatManager.getState() };
+      const updatedEnemies = [...combatManager.getCombatState().enemies];
+      
+      setGameState(updatedGameState);
+      setEnemies(updatedEnemies);
+
+      // Check for victory condition after playing a card
+      if (updatedEnemies.every(enemy => enemy.currentHealth <= 0)) {
+        setDefeatedEnemies(updatedEnemies);
+        handleVictory();
+      }
     }
   };
 
@@ -300,13 +309,13 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
 
     // Update both states
     const updatedGameState = combatManager.getState();
+    const updatedEnemies = [...combatManager.getCombatState().enemies];
+    
     setGameState({ ...updatedGameState });
-    setEnemies([...combatManager.getCombatState().enemies]);
+    setEnemies(updatedEnemies);
 
     // Check game status
-    if (updatedGameState.status === "VICTORY") {
-      handleVictory();
-    } else if (updatedGameState.status === "DEFEAT") {
+    if (updatedGameState.status === "DEFEAT") {
       handleCombatDefeat();
     }
   };
