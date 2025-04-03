@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import Image from "next/image"
 
 // Add window.ethereum type declaration
 declare global {
@@ -169,9 +170,11 @@ export default function UserAvatar() {
         className="relative h-10 w-10 rounded-full bg-gray-100 overflow-hidden hover:ring-2 hover:ring-gray-300 transition-all flex items-center justify-center"
       >
         {userData.image ? (
-          <img
+          <Image
             src={userData.image}
             alt={userData.name || "User"}
+            width={40}
+            height={40}
             className="h-full w-full object-cover rounded-full"
           />
         ) : (
@@ -185,11 +188,13 @@ export default function UserAvatar() {
           {/* User Profile Section */}
           <div className="p-4 border-b border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
+              <div className="h-12 w-12 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
                 {userData.image ? (
-                  <img
+                  <Image
                     src={userData.image}
                     alt={userData.name || "User"}
+                    width={48}
+                    height={48}
                     className="h-full w-full object-cover rounded-full"
                   />
                 ) : (

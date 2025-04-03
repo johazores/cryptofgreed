@@ -18,7 +18,7 @@ export async function GET() {
     const character = await prisma.character.findFirst({
       where: {
         userId: session.user.id,
-        isActive: true
+        isDead: false
       }
     });
 
