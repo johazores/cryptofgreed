@@ -1,0 +1,107 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                     String      @id @default(auto()) @map("_id") @db.ObjectId
+  email                  String      @unique
+  password               String
+  role                   String      @default("USER")
+  name                   String?
+  walletAddress          String?     @unique  // External wallet
+  custodialWalletAddress String     @unique  // Our managed wallet
+  encryptedPrivateKey    String      // Encrypted private key for custodial wallet
+  crystals               Int         @default(0)
+  bankItems              BankItem[]
+  characters             Character[]
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model Character {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  name          String         @unique
+  class         FightingStyle
+  gold          Int            @default(0)
+  currentHealth Int            @default(100)
+  maxHealth     Int            @default(100)
+  energy        Int            @default(3)
+  monstersSlain Int            @default(0)
+  isDead        Boolean        @default(false)
+  experience    Int            @default(0)
+  level         Int            @default(1)
+  floor         Int            @default(1) 
+  equipment     Equipment[]    // NFT equipment for current run
+  powers        Power[]        // Special abilities gained during run
+  user          User           @relation(fields: [userId], references: [id])
+  userId        String         @db.ObjectId
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+enum FightingStyle {
+  MELEE    // Self-buffs + Defense
+  RANGE    // Debuffs + Status Effects
+  MAGIC    // AOE + Utility
+}
+
+model Equipment {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String
+  slot            EquipmentSlot
+  tier            ItemTier
+  stats           Json          // {"hp": 20, "armor": 5, "damage": 10, etc}
+  contractAddress String        // NFT contract address
+  nftId           String        // NFT reference
+  character       Character?    @relation(fields: [characterId], references: [id])
+  characterId     String?      @db.ObjectId
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model BankItem {
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String
+  slot            EquipmentSlot
+  tier            ItemTier
+  contractAddress String
+  stats           Json      // {"hp": 20, "armor": 5, "damage": 10, etc}
+  nftId           String    // NFT reference
+  user            User      @relation(fields: [userId], references: [id])
+  userId          String    @db.ObjectId
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Power {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  effect      Json      // Power-specific effects
+  character   Character @relation(fields: [characterId], references: [id])
+  characterId String    @db.ObjectId
+  createdAt   DateTime  @default(now())
+}
+
+enum EquipmentSlot {
+  HELMET
+  ARMOR
+  BOOTS
+  WEAPON
+}
+
+enum ItemTier {
+  T0    // Starter equipment
+  T1    // Common
+  T2    // Uncommon
+  T3    // Rare
+  T4    // Epic
+  T5    // Legendary
+}

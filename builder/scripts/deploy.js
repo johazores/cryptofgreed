@@ -5,10 +5,18 @@ async function main() {
 
   console.log("Deploying contract with the account:", deployer.address);
 
-  const CyrptOfGreed = await ethers.getContractFactory("CyrptOfGreed");
-  const myCyrptOfGreed = await CyrptOfGreed.deploy();
+  const CryptOfGreedNFT = await ethers.getContractFactory("CryptOfGreedNFT");
+  const cryptOfGreedNFT = await CryptOfGreedNFT.deploy();
 
-  console.log("Contract address:", await myCyrptOfGreed.getAddress());
+  console.log("Contract address:", await cryptOfGreedNFT.getAddress());
+
+  // Verify the contract on the Core DAO explorer (optional)
+  if (process.env.CORE_EXPLORER_API_KEY) {
+    await hre.run("verify:verify", {
+      address: await cryptOfGreedNFT.getAddress(),
+      constructorArguments: [],
+    });
+  }
 }
 
 main()

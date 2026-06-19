@@ -4,8 +4,8 @@ A smart contract system for minting game-based NFTs on Core DAO, built for the C
 
 ## Deployment Information
 
-- **Deploying Account**: `0x3632971f783809Eb79FE94E08C97A8d0b0B32824`
-- **Contract Address**: `0x8c27BECce0570fD6B1069292846BE787fC2aC857`
+Deploying contract with the account: 0x3632971f783809Eb79FE94E08C97A8d0b0B32824
+Contract address: 0xE80C3d90586D1E39B2484dBb01AcD96BC4Bfc1f1
 
 ## Features
 
@@ -57,7 +57,7 @@ This project is specifically built for the Core DAO ecosystem, leveraging its:
 1. Install dependencies:
 
 ```bash
-npm install
+yarn install
 ```
 
 2. Configure environment:
