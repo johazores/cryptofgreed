@@ -1,39 +1,53 @@
-import { GameState } from "./game-state";
-import { Enemy } from "./enemy";
-import { Card } from "@/types/character";
+import type { Card } from "../cards";
+import type { Enemy } from "./enemy";
+import type { GameState } from "./game-state";
+import { shuffle, type RandomSource } from "./random.ts";
 
 export type CombatState = {
   enemies: Enemy[];
+  defeatedEnemies: Enemy[];
   turn: number;
   isPlayerTurn: boolean;
 };
 
 export class CombatManager {
+  private readonly random: RandomSource;
   private gameState: GameState;
   private combatState: CombatState;
 
-  constructor(gameState: GameState, enemies: Enemy[]) {
+  constructor(
+    gameState: GameState,
+    enemies: Enemy[],
+    random: RandomSource = Math.random
+  ) {
     this.gameState = gameState;
+    this.random = random;
     this.combatState = {
-      enemies,
+      enemies: enemies.map((enemy) => ({
+        ...enemy,
+        intent: { ...enemy.intent },
+      })),
+      defeatedEnemies: [],
       turn: 1,
       isPlayerTurn: true,
     };
 
-    // Initialize combat state
-    this.drawNewHand();
+    if (this.gameState.hand.length === 0) {
+      this.drawNewHand();
+    }
   }
 
-  playCard(cardIndex: number, targetIndex: number): boolean {
+  playCard(cardIndex: number, targetIndex = 0): boolean {
+    if (!this.combatState.isPlayerTurn || this.gameState.status !== "PLAYING") {
+      return false;
+    }
+
     if (cardIndex < 0 || cardIndex >= this.gameState.hand.length) return false;
 
     const card = this.gameState.hand[cardIndex];
     if (card.energy > this.gameState.currentEnergy) return false;
 
-    // Apply card effects
     this.applyCardEffects(card, targetIndex);
-
-    // Move card to discard pile
     this.gameState.hand.splice(cardIndex, 1);
     this.gameState.discardPile.push(card);
     this.gameState.currentEnergy -= card.energy;
@@ -45,7 +59,19 @@ export class CombatManager {
     const effects = card.effects;
 
     if (effects.damage) {
-      this.dealDamage("player", effects.damage, targetIndex);
+      if (effects.special === "twice") {
+        const target = this.combatState.enemies[targetIndex];
+        if (target) {
+          this.dealDamageToEnemy(target, effects.damage);
+          this.dealDamageToEnemy(target, effects.damage);
+        }
+      } else if (effects.special === "aoe") {
+        const targets = [...this.combatState.enemies];
+        targets.forEach((target) => this.dealDamageToEnemy(target, effects.damage!));
+      } else {
+        const target = this.combatState.enemies[targetIndex];
+        if (target) this.dealDamageToEnemy(target, effects.damage);
+      }
     }
 
     if (effects.block) {
@@ -58,121 +84,114 @@ export class CombatManager {
         this.gameState.character.maxHealth
       );
     }
-
-    // Handle special effects
-    if (effects.special) {
-      switch (effects.special) {
-        case "twice":
-          if (effects.damage) {
-            this.dealDamage("player", effects.damage, targetIndex);
-          }
-          break;
-        case "aoe":
-          if (effects.damage) {
-            this.combatState.enemies.forEach((_, index) => {
-              this.dealDamage("player", effects.damage!, index);
-            });
-          }
-          break;
-      }
-    }
   }
 
-  dealDamage(source: "player" | "enemy", damage: number, targetIndex: number) {
-    if (source === "player") {
-      const enemy = this.combatState.enemies[targetIndex];
-      if (!enemy) return;
+  private dealDamageToEnemy(enemy: Enemy, damage: number) {
+    const targetIndex = this.combatState.enemies.indexOf(enemy);
+    if (targetIndex < 0) return;
 
-      const actualDamage = Math.max(0, damage - enemy.block);
-      enemy.block = Math.max(0, enemy.block - damage);
-      enemy.currentHealth -= actualDamage;
+    const actualDamage = Math.max(0, damage - enemy.block);
+    enemy.block = Math.max(0, enemy.block - damage);
+    enemy.currentHealth = Math.max(0, enemy.currentHealth - actualDamage);
 
-      if (enemy.currentHealth <= 0) {
-        this.combatState.enemies = this.combatState.enemies.filter(
-          (_, i) => i !== targetIndex
-        );
-        // Check for victory when all enemies are defeated
-        if (this.combatState.enemies.length === 0) {
-          this.gameState.status = "VICTORY";
-        }
-      }
-    } else {
-      const actualDamage = Math.max(0, damage - this.gameState.block);
-      this.gameState.block = Math.max(0, this.gameState.block - damage);
-      this.gameState.character.currentHealth -= actualDamage;
+    if (enemy.currentHealth !== 0) return;
 
-      // Check for defeat when character health reaches 0
-      if (this.gameState.character.currentHealth <= 0) {
-        this.gameState.character.currentHealth = 0; // Ensure health doesn't go negative
-        this.gameState.status = "DEFEAT";
-      }
-    }
-  }
-
-  processEnemyTurn() {
-    this.combatState.enemies.forEach((enemy) => {
-      switch (enemy.intent.type) {
-        case "ATTACK":
-          this.dealDamage("enemy", enemy.intent.value, 0);
-          break;
-        case "BLOCK":
-          enemy.block += enemy.intent.value;
-          break;
-        // Handle other intent types
-      }
+    this.combatState.defeatedEnemies.push({
+      ...enemy,
+      intent: { ...enemy.intent },
     });
+    this.combatState.enemies.splice(targetIndex, 1);
+
+    if (this.combatState.enemies.length === 0) {
+      this.gameState.status = "VICTORY";
+      this.combatState.isPlayerTurn = false;
+    }
   }
 
-  isCombatOver(): boolean {
-    return (
-      this.combatState.enemies.length === 0 ||
-      this.gameState.character.currentHealth <= 0
+  private dealDamageToPlayer(damage: number) {
+    const actualDamage = Math.max(0, damage - this.gameState.block);
+    this.gameState.block = Math.max(0, this.gameState.block - damage);
+    this.gameState.character.currentHealth = Math.max(
+      0,
+      this.gameState.character.currentHealth - actualDamage
     );
+
+    if (this.gameState.character.currentHealth === 0) {
+      this.gameState.status = "DEFEAT";
+      this.combatState.isPlayerTurn = false;
+    }
   }
 
-  getCombatState(): CombatState {
-    return { ...this.combatState };
-  }
+  endTurn(): boolean {
+    if (!this.combatState.isPlayerTurn || this.gameState.status !== "PLAYING") {
+      return false;
+    }
 
-  getState(): GameState {
-    return { ...this.gameState };
-  }
-
-  endTurn() {
-    // Move hand to discard pile
     this.gameState.discardPile.push(...this.gameState.hand);
     this.gameState.hand = [];
+    this.combatState.isPlayerTurn = false;
 
-    // Reset energy
-    this.gameState.currentEnergy = this.gameState.maxEnergy;
+    this.processEnemyTurn();
 
-    // Reset block
-    this.gameState.block = 0;
-
-    // Process enemy actions if it's not game over
-    if (!this.isCombatOver()) {
-      this.processEnemyTurn();
+    if (this.gameState.status === "PLAYING") {
+      this.gameState.block = 0;
+      this.gameState.currentEnergy = this.gameState.maxEnergy;
+      this.drawNewHand();
+      this.combatState.turn += 1;
+      this.combatState.isPlayerTurn = true;
     }
 
-    // Draw new hand if combat is still ongoing
-    if (!this.isCombatOver()) {
-      this.drawNewHand();
+    return true;
+  }
+
+  private processEnemyTurn() {
+    for (const enemy of this.combatState.enemies) {
+      if (this.gameState.status !== "PLAYING") return;
+
+      if (enemy.intent.type === "ATTACK") {
+        this.dealDamageToPlayer(enemy.intent.value);
+      } else if (enemy.intent.type === "BLOCK") {
+        enemy.block += enemy.intent.value;
+      }
     }
   }
 
   private drawNewHand() {
-    for (let i = 0; i < 5; i++) {
+    for (let index = 0; index < 5; index += 1) {
       if (this.gameState.drawPile.length === 0) {
-        // Shuffle discard pile into draw pile
-        this.gameState.drawPile = [...this.gameState.discardPile].sort(
-          () => Math.random() - 0.5
-        );
+        if (this.gameState.discardPile.length === 0) return;
+        this.gameState.drawPile = shuffle(this.gameState.discardPile, this.random);
         this.gameState.discardPile = [];
       }
-      if (this.gameState.drawPile.length > 0) {
-        const card = this.gameState.drawPile.pop()!;
-        this.gameState.hand.push(card);
-      }
+
+      const card = this.gameState.drawPile.pop();
+      if (!card) return;
+      this.gameState.hand.push(card);
     }
+  }
+
+  getCombatState(): CombatState {
+    return {
+      ...this.combatState,
+      enemies: this.combatState.enemies.map((enemy) => ({
+        ...enemy,
+        intent: { ...enemy.intent },
+      })),
+      defeatedEnemies: this.combatState.defeatedEnemies.map((enemy) => ({
+        ...enemy,
+        intent: { ...enemy.intent },
+      })),
+    };
+  }
+
+  getState(): GameState {
+    return {
+      ...this.gameState,
+      character: { ...this.gameState.character },
+      deck: [...this.gameState.deck],
+      hand: [...this.gameState.hand],
+      discardPile: [...this.gameState.discardPile],
+      drawPile: [...this.gameState.drawPile],
+    };
   }
 }
