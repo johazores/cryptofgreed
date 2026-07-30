@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Gem, Plus, RefreshCw, Shield, Skull, Swords } from "lucide-react";
 import { toast } from "sonner";
+import CharacterCreation from "@/components/character/character-creation";
+import CharacterSelection from "@/components/character/character-selection";
 import Button from "@/components/ui/button";
-import CharacterCreation from "@/components/character-creation";
-import CharacterSelection from "@/components/character-selection";
 import { useCharacter } from "@/context/character-context";
 import { REVIVE_COST } from "@/lib/game/revival";
 
