@@ -1,4 +1,4 @@
-import { FightingStyle } from "@prisma/client";
+import type { FightingStyle } from "@prisma/client";
 
 export interface Character {
   floor: number;
@@ -12,7 +12,7 @@ export interface Character {
   energy: number;
   gold: number;
   equipment: Equipment[];
-  powers: any[];
+  powers: Power[];
   isDead: boolean;
   block: number;
   deck: Card[];
@@ -49,5 +49,13 @@ export interface Equipment {
   name: string;
   description: string;
   slot: string;
+  tier?: string;
   stats: ItemStats;
+}
+
+export interface Power {
+  id: string;
+  name: string;
+  description: string;
+  effect?: unknown;
 }
