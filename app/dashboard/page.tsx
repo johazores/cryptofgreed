@@ -35,8 +35,12 @@ export default function DashboardPage() {
       return;
     }
 
-    const result = await reviveCharacter(characterId);
-    setCrystals(result.crystalsRemaining);
+    try {
+      const result = await reviveCharacter(characterId);
+      setCrystals(result.crystalsRemaining);
+    } catch {
+      // The character context displays the server error.
+    }
   };
 
   useEffect(() => {
