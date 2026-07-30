@@ -1,75 +1,73 @@
-import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 
 export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user?.id) {
-      return new NextResponse(
-        JSON.stringify({ message: "You must be logged in" }),
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "You must be logged in" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { name, email } = body;
+    const body: unknown = await request.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ message: "Invalid profile request" }, { status: 400 });
+    }
 
-    if (!email) {
-      return new NextResponse(
-        JSON.stringify({ message: "Email is required" }),
+    const { name, email } = body as Record<string, unknown>;
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    const normalizedName = typeof name === "string" ? name.trim().replace(/\s+/g, " ") : "";
+
+    if (!normalizedEmail) {
+      return NextResponse.json({ message: "Email is required" }, { status: 400 });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return NextResponse.json({ message: "Invalid email format" }, { status: 400 });
+    }
+
+    if (normalizedName.length > 50) {
+      return NextResponse.json(
+        { message: "Display name must be 50 characters or fewer" },
         { status: 400 }
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return new NextResponse(
-        JSON.stringify({ message: "Invalid email format" }),
-        { status: 400 }
-      );
-    }
-
-    // Check if email is already taken by another user
     const existingUser = await prisma.user.findFirst({
       where: {
-        email,
-        NOT: {
-          id: session.user.id
-        }
-      }
+        email: normalizedEmail,
+        NOT: { id: session.user.id },
+      },
+      select: { id: true },
     });
 
     if (existingUser) {
-      return new NextResponse(
-        JSON.stringify({ message: "This email is already in use" }),
-        { status: 400 }
+      return NextResponse.json(
+        { message: "This email is already in use" },
+        { status: 409 }
       );
     }
 
-    // Update user profile
     const updatedUser = await prisma.user.update({
-      where: {
-        id: session.user.id
-      },
+      where: { id: session.user.id },
       data: {
-        name: name || null, // Allow removing name by setting to null
-        email
-      }
+        name: normalizedName || null,
+        email: normalizedEmail,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
     });
 
     return NextResponse.json({
       message: "Profile updated successfully",
-      user: updatedUser
+      user: updatedUser,
     });
   } catch (error) {
     console.error("[USER_PROFILE_UPDATE]", error);
-    return new NextResponse(
-      JSON.stringify({ message: "Something went wrong" }),
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Failed to update profile" }, { status: 500 });
   }
-} 
+}
