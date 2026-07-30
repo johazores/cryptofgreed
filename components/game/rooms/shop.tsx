@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Coins, ShieldCheck, ShoppingBag, Sword, Heart } from "lucide-react";
+import { Coins, Heart, ShieldCheck, ShoppingBag, Sword } from "lucide-react";
 import { toast } from "sonner";
 import Button from "@/components/ui/button";
 import { useCharacter } from "@/context/character-context";
@@ -35,7 +35,7 @@ export default function Shop({ onContinue, isAdvancing = false }: ShopProps) {
     setPurchasingItemId(item.id);
 
     try {
-      const response = await fetch("/api/character/equipment", {
+      const response = await fetch("/api/characters/equipment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ characterId: character.id, itemId: item.id }),
@@ -64,7 +64,8 @@ export default function Shop({ onContinue, isAdvancing = false }: ShopProps) {
           <div>
             <p className="text-sm font-semibold text-amber-950">Available gold</p>
             <p className="mt-1 text-sm text-amber-800">
-              Inventory strength scales with the current floor and stays stable while you shop.
+              Inventory strength scales with the current floor and stays stable
+              while you shop.
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-amber-200/70 px-4 py-2 font-bold text-amber-950 tabular-nums">

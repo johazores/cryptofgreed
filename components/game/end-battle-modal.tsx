@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Coins, Gem, Skull, Sparkles, Trophy } from "lucide-react";
 import Button from "@/components/ui/button";
-import Modal from "../modal";
+import Modal from "@/components/ui/modal";
 
 interface GameModalProps {
   isOpen: boolean;
@@ -145,7 +145,9 @@ export default function GameModal({
                 isLoading={isProcessing}
                 loadingLabel="Reviving..."
               >
-                {canAffordRevive ? "Revive at full health" : "Not enough crystals"}
+                {canAffordRevive
+                  ? "Revive at full health"
+                  : "Not enough crystals"}
               </Button>
             </div>
           </div>

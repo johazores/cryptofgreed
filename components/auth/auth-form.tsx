@@ -5,7 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ShieldCheck, Skull } from "lucide-react";
 import Button from "@/components/ui/button";
-import TextField from "@/components/textfield";
+import TextField from "@/components/ui/text-field";
 
 interface AuthProps {
   onSuccess?: () => void;
@@ -43,7 +43,9 @@ export default function Auth({ onSuccess }: AuthProps) {
         });
 
         if (!registration.ok) {
-          throw new Error((await registration.text()) || "Failed to create account");
+          throw new Error(
+            (await registration.text()) || "Failed to create account"
+          );
         }
       }
 
@@ -160,14 +162,18 @@ export default function Auth({ onSuccess }: AuthProps) {
 
         <div className="border-t border-slate-200 pt-4 text-center">
           <p className="text-sm text-slate-500">
-            {mode === "login" ? "New to Crypt of Greed?" : "Already have an account?"}
+            {mode === "login"
+              ? "New to Crypt of Greed?"
+              : "Already have an account?"}
           </p>
           <Button
             type="button"
             variant="ghost"
             className="mt-1 text-primary"
             onClick={() => {
-              setMode((current) => (current === "login" ? "register" : "login"));
+              setMode((current) =>
+                current === "login" ? "register" : "login"
+              );
               setError(null);
             }}
           >

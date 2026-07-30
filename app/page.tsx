@@ -1,4 +1,4 @@
-import LoginButton from "@/components/login-button";
+import LoginButton from "@/components/auth/login-button";
 import {
   GiCardPlay,
   GiChest,

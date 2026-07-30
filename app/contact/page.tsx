@@ -1,10 +1,8 @@
-import React from "react";
-import { Metadata } from "next";
-import { GiScrollUnfurled, GiQuillInk } from "react-icons/gi";
+import type { Metadata } from "next";
+import { Mail, MessageSquare, User } from "lucide-react";
 import { FaDiscord, FaTwitter } from "react-icons/fa";
-import TextField from "@/components/textfield";
-import TextArea from "@/components/textarea";
-import { Mail, User, MessageSquare } from "lucide-react";
+import TextArea from "@/components/ui/text-area";
+import TextField from "@/components/ui/text-field";
 
 export const metadata: Metadata = {
   title: "Contact - Crypt of Greed",
@@ -18,17 +16,17 @@ export default function ContactPage() {
       <div className="relative py-16 sm:py-24">
         <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-5" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="font-medievalsharp text-5xl font-bold text-gray-900 mb-8">
+            <h1 className="mb-8 font-medievalsharp text-5xl font-bold text-gray-900">
               Contact <span className="text-primary">Us</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="mx-auto max-w-3xl text-xl text-gray-600">
               Have questions about Crypt of Greed? We&apos;re here to help!
             </p>
           </div>
 
-          <div className="mt-16 max-w-3xl mx-auto">
+          <div className="mx-auto mt-16 max-w-3xl">
             <form className="space-y-8">
               <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
                 <TextField
@@ -39,7 +37,7 @@ export default function ContactPage() {
                   placeholder="Enter your name"
                   required
                   fullWidth
-                  startIcon={<User className="w-5 h-5" />}
+                  startIcon={<User className="h-5 w-5" />}
                 />
 
                 <TextField
@@ -50,60 +48,52 @@ export default function ContactPage() {
                   placeholder="Enter your email"
                   required
                   fullWidth
-                  startIcon={<Mail className="w-5 h-5" />}
+                  startIcon={<Mail className="h-5 w-5" />}
                 />
               </div>
 
-              <div>
-                <TextArea
-                  id="message"
-                  name="message"
-                  label="Message"
-                  placeholder="Enter your message"
-                  required
-                  fullWidth
-                  rows={6}
-                  startIcon={<MessageSquare className="w-5 h-5" />}
-                />
-              </div>
+              <TextArea
+                id="message"
+                name="message"
+                label="Message"
+                placeholder="Enter your message"
+                required
+                fullWidth
+                rows={6}
+                startIcon={<MessageSquare className="h-5 w-5" />}
+              />
 
-              <div>
-                <button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary-dark text-white font-medievalsharp py-3 px-6 rounded-lg transition-colors duration-200"
-                >
-                  Send Message
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-primary px-6 py-3 font-medievalsharp text-white transition-colors duration-200 hover:bg-primary-dark"
+              >
+                Send Message
+              </button>
             </form>
           </div>
 
           <div className="mt-20">
-            <h2 className="font-medievalsharp text-3xl font-bold text-center mb-12">
+            <h2 className="mb-12 text-center font-medievalsharp text-3xl font-bold">
               Connect With Us
             </h2>
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 max-w-2xl mx-auto">
+            <div className="mx-auto grid max-w-2xl grid-cols-1 gap-8 sm:grid-cols-2">
               <a
                 href="https://discord.gg/cryptofgreed"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-4 p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+                className="flex items-center justify-center gap-4 rounded-xl bg-gray-50 p-6 transition-colors duration-200 hover:bg-gray-100"
               >
                 <FaDiscord className="h-8 w-8 text-primary" />
-                <span className="font-medievalsharp text-xl">
-                  Join our Discord
-                </span>
+                <span className="font-medievalsharp text-xl">Join our Discord</span>
               </a>
               <a
                 href="https://twitter.com/cryptofgreed"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-4 p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+                className="flex items-center justify-center gap-4 rounded-xl bg-gray-50 p-6 transition-colors duration-200 hover:bg-gray-100"
               >
                 <FaTwitter className="h-8 w-8 text-primary" />
-                <span className="font-medievalsharp text-xl">
-                  Follow on Twitter
-                </span>
+                <span className="font-medievalsharp text-xl">Follow on Twitter</span>
               </a>
             </div>
           </div>

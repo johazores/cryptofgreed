@@ -1,5 +1,11 @@
-import { AlertTriangle, Campfire, CircleHelp, ShoppingBag, Swords } from "lucide-react";
-import Modal from "../modal";
+import {
+  AlertTriangle,
+  Campfire,
+  CircleHelp,
+  ShoppingBag,
+  Swords,
+} from "lucide-react";
+import Modal from "@/components/ui/modal";
 import { RoomType, type RoomType as RoomTypeValue } from "@/lib/game/room-manager";
 
 interface RoomOption {
