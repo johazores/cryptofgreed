@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/johazores/cryptofgreed/security/policy
+    about: Report sensitive vulnerabilities privately. Do not post exploit details or secrets in a public issue.
+  - name: Documentation index
+    url: https://github.com/johazores/cryptofgreed/blob/main/docs/README.md
+    about: Review the product, design, engineering, and platform documents before opening an issue.
