@@ -1,85 +1,86 @@
-import React from "react";
-import { Card as CardType } from "@/lib/cards";
-import { cn } from "@/lib/utils";
-import { Shield, Sword } from "lucide-react";
+import type { Card as CardType } from "@/lib/cards";
+import { Shield, Sparkles, Sword } from "lucide-react";
 
 interface CardProps {
   card: CardType;
   index: number;
   currentEnergy: number;
   onClick: (index: number) => void;
+  disabled?: boolean;
 }
 
-// Icons for different card types
-const typeIcons = {
-  ATTACK: <Sword className="h-4 w-4 text-red-400" />,
-  SKILL: <Shield className="h-4 w-4 text-blue-400" />,
-  POWER: <span className="text-xs text-purple-400">★</span>,
-};
+const typeConfig = {
+  ATTACK: {
+    icon: Sword,
+    label: "Attack",
+    className:
+      "border-red-400/35 bg-gradient-to-b from-red-950 to-slate-950 hover:border-red-300/70",
+    badge: "bg-red-400/15 text-red-200",
+  },
+  SKILL: {
+    icon: Shield,
+    label: "Skill",
+    className:
+      "border-sky-400/35 bg-gradient-to-b from-sky-950 to-slate-950 hover:border-sky-300/70",
+    badge: "bg-sky-400/15 text-sky-200",
+  },
+  POWER: {
+    icon: Sparkles,
+    label: "Power",
+    className:
+      "border-violet-400/35 bg-gradient-to-b from-violet-950 to-slate-950 hover:border-violet-300/70",
+    badge: "bg-violet-400/15 text-violet-200",
+  },
+} as const;
 
-const cardStyles = {
-  ATTACK:
-    "border-red-700 bg-gradient-to-b from-red-900/90 to-red-950/90 hover:from-red-800/90 hover:to-red-900/90",
-  SKILL:
-    "border-blue-700 bg-gradient-to-b from-blue-900/90 to-blue-950/90 hover:from-blue-800/90 hover:to-blue-900/90",
-  POWER:
-    "border-purple-700 bg-gradient-to-b from-purple-900/90 to-purple-950/90 hover:from-purple-800/90 hover:to-purple-900/90",
-};
-
-const Card = ({ card, index, currentEnergy, onClick }: CardProps) => {
-  const isPlayable = card.energy <= currentEnergy;
+export default function Card({
+  card,
+  index,
+  currentEnergy,
+  onClick,
+  disabled = false,
+}: CardProps) {
+  const isPlayable = !disabled && card.energy <= currentEnergy;
+  const config = typeConfig[card.type];
+  const Icon = config.icon;
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => onClick(index)}
-      className={`
-        flex-shrink-0 p-2 md:p-4 rounded-lg shadow-md border border-gray-200 
-        w-20 sm:w-24 md:w-32 h-full cursor-pointer 
-        transform transition-all duration-200 hover:-translate-y-2
-        ${isPlayable ? "hover:shadow-xl" : "opacity-50"}
-        ${card.type === "ATTACK" ? cardStyles.ATTACK : card.type === "SKILL" ? cardStyles.SKILL : "bg-purple-500/10"}
-      `}
+      disabled={!isPlayable}
+      aria-label={`${card.name}. Costs ${card.energy} energy. ${card.description}`}
+      className={`group relative h-44 w-32 shrink-0 overflow-hidden rounded-xl border p-3 text-left text-white shadow-lg transition duration-200 sm:h-48 sm:w-36 ${config.className} ${
+        isPlayable
+          ? "hover:-translate-y-2 hover:shadow-2xl focus-visible:-translate-y-1"
+          : "cursor-not-allowed opacity-45 grayscale-[0.2]"
+      } focus-visible:ring-4 focus-visible:ring-amber-300/40 focus-visible:outline-none`}
     >
-      {/* Energy Cost */}
-      <div className="absolute top-1 left-1 sm:top-2 sm:left-2 flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-blue-600 text-white font-bold text-xs sm:text-sm shadow-md border border-blue-500">
-        <span
-          className={`text-[10px] sm:text-xs font-bold text-white ${!isPlayable && "text-red-200"}`}
-        >
-          {card.energy}
-        </span>
-      </div>
+      <span className="absolute top-2 left-2 flex h-8 w-8 items-center justify-center rounded-full border border-sky-200/30 bg-sky-500 font-bold text-white shadow-md">
+        {card.energy}
+      </span>
 
-      <div className="pt-4 sm:pt-5 md:pt-6 pb-2 sm:pb-3">
-        <div className="flex justify-between items-center mb-1 sm:mb-2">
-          <h3 className="text-xs sm:text-sm md:text-base font-bold text-white truncate max-w-[70%]">
-            {card.name}
-          </h3>
-          <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gray-800/60 border border-gray-700/50">
-            {typeIcons[card.type]}
-          </div>
-        </div>
+      <span
+        className={`absolute top-2 right-2 flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold tracking-wide uppercase ${config.badge}`}
+      >
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+        {config.label}
+      </span>
 
-        <div className="text-[10px] sm:text-xs text-white/80 mb-1">{card.type}</div>
-
-        <div className="text-[8px] sm:text-xs text-white/90 border-t border-gray-700/50 pt-1 sm:pt-2 mt-1 line-clamp-2">
+      <div className="flex h-full flex-col pt-10">
+        <h3 className="font-medievalsharp text-base leading-tight sm:text-lg">
+          {card.name}
+        </h3>
+        <div className="my-3 h-px bg-white/15" />
+        <p className="text-xs leading-5 text-slate-200 sm:text-sm">
           {card.description}
+        </p>
+        <div className="mt-auto text-[10px] font-semibold tracking-[0.18em] text-white/45 uppercase">
+          Play card
         </div>
       </div>
 
-      {/* Card glow effect */}
-      <div
-        className={cn(
-          "absolute inset-0 opacity-0 transition-opacity duration-300",
-          card.type === "ATTACK"
-            ? "bg-red-500/10"
-            : card.type === "SKILL"
-              ? "bg-blue-500/10"
-              : "bg-purple-500/10",
-          "hover:opacity-100"
-        )}
-      />
-    </div>
+      <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-white/0 to-white/5 opacity-0 transition group-hover:opacity-100" />
+    </button>
   );
-};
-
-export default Card;
+}
