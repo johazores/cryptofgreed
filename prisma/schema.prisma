@@ -57,12 +57,12 @@ model Equipment {
   slot            EquipmentSlot
   tier            ItemTier
   stats           Json
-  contractAddress String
-  nftId           String
-  character       Character?    @relation(fields: [characterId], references: [id])
-  characterId     String?       @db.ObjectId
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  contractAddress String?        // Legacy NFT reference; normal shop items do not use it
+  nftId           String?        // Legacy NFT reference; normal shop items do not use it
+  character       Character?     @relation(fields: [characterId], references: [id])
+  characterId     String?        @db.ObjectId
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model BankItem {
