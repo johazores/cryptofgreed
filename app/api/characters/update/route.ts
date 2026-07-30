@@ -19,6 +19,17 @@ export async function POST(req: Request) {
       );
     }
 
+    if (
+      updates === null ||
+      typeof updates !== "object" ||
+      Array.isArray(updates)
+    ) {
+      return NextResponse.json(
+        { message: "Character updates must be an object" },
+        { status: 400 }
+      );
+    }
+
     if (Object.prototype.hasOwnProperty.call(updates, "isDead")) {
       return NextResponse.json(
         { message: "Use the dedicated death or revival endpoint" },
