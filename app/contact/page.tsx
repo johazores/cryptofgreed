@@ -1,10 +1,9 @@
 import React from "react";
-import { Metadata } from "next";
-import { GiScrollUnfurled, GiQuillInk } from "react-icons/gi";
+import type { Metadata } from "next";
 import { FaDiscord, FaTwitter } from "react-icons/fa";
-import TextField from "@/components/textfield";
+import { Mail, MessageSquare, User } from "lucide-react";
 import TextArea from "@/components/textarea";
-import { Mail, User, MessageSquare } from "lucide-react";
+import TextField from "@/components/ui/text-field";
 
 export const metadata: Metadata = {
   title: "Contact - Crypt of Greed",
