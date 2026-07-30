@@ -1,13 +1,19 @@
-import React, { useState } from "react";
-import { GameState } from "@/lib/game/game-state";
+"use client";
+
+import { useState } from "react";
+import { Backpack, Coins, Footprints, Shield, Skull, Zap } from "lucide-react";
+import type { GameState } from "@/lib/game/game-state";
 import { useCharacter } from "@/context/character-context";
-import { Character } from "@/types/character";
+import type { Character } from "@/types/character";
 import EquipmentModal from "./equipment-modal";
-import { Coins, Shield, Skull, Zap } from "lucide-react";
 
 interface CharacterStatsProps {
   gameState?: GameState;
   character?: Character;
+}
+
+function clampPercentage(value: number) {
+  return Math.max(0, Math.min(100, value));
 }
 
 export default function CharacterStats({
@@ -20,110 +26,78 @@ export default function CharacterStats({
 
   if (!character) return null;
 
-  const currentHealth = gameState?.character.currentHealth ?? character.currentHealth;
-  const healthPercentage = (currentHealth / character.maxHealth) * 100;
-  const experiencePercentage = character.experience % 100;
+  const currentHealth =
+    gameState?.character.currentHealth ?? character.currentHealth;
+  const healthPercentage = clampPercentage(
+    (currentHealth / Math.max(1, character.maxHealth)) * 100
+  );
+  const experiencePercentage = clampPercentage(character.experience % 100);
+
   return (
     <>
-      <div className="bg-gradient-to-b from-gray-700 to-gray-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
-        <div className="col md:flex-row items-start md:items-center p-2 pt-3 md:p-3 gap-2 md:gap-4 text-sm md:text-base">
-          {/* Character Info */}
-          <div className="flex-shrink-0 pb-1 md:pb-1 md:pr-4 w-full md:w-auto border-b border-gray-700">
-            <div className="flex items-center gap-1 md:gap-2">
-              <h3 className="font-medievalsharp text-base md:text-lg text-white">
-                {character.name}
-              </h3>
-              <span className="px-2 py-0.5 bg-yellow-900/50 border border-yellow-800/50 rounded text-xs font-medium text-yellow-400">
-                Lvl {character.level}
-              </span>
-              <div className="flex items-center ml-auto">
-                <button
-                  onClick={() => setShowEquipment(true)}
-                  className="p-1.5 rounded-full bg-gray-700/50 hover:bg-gray-700 transition-colors"
-                  title="View Equipment"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-yellow-400"
-                  >
-                    <circle cx="12" cy="12" r="4" />
-                    <path d="M12 2v2" />
-                    <path d="M12 20v2" />
-                    <path d="m4.93 4.93 1.41 1.41" />
-                    <path d="m17.66 17.66 1.41 1.41" />
-                    <path d="M2 12h2" />
-                    <path d="M20 12h2" />
-                    <path d="m6.34 17.66-1.41 1.41" />
-                    <path d="m19.07 4.93-1.41 1.41" />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="text-xs text-gray-300">{character.class}</div>
-          </div>
-
-          {/* Main Stats */}
-          <div className="flex-grow space-y-1 md:space-y-2 min-w-[150px] md:min-w-[200px] w-full md:w-auto">
-            {/* Health */}
+      <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/90 text-white shadow-xl backdrop-blur">
+        <div className="grid gap-4 p-4 lg:grid-cols-[minmax(190px,0.8fr)_minmax(260px,1.4fr)_auto] lg:items-center">
+          <div className="flex items-center justify-between gap-3 lg:justify-start">
             <div>
-              <div className="flex justify-between text-xs mb-0.5 md:mb-1 pt-2">
-                <span className="text-white">Health</span>
-                <span className="text-white">
-                  {currentHealth}/{character.maxHealth}
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-medievalsharp text-xl leading-none">
+                  {character.name}
+                </h2>
+                <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-2 py-1 text-[10px] font-bold tracking-wide text-amber-200 uppercase">
+                  Level {character.level}
                 </span>
               </div>
-              <div className="h-1 md:h-1.5 bg-gray-100 rounded-full">
-                <div
-                  className="h-full bg-red-500 rounded-full transition-all duration-300"
-                  style={{ width: `${healthPercentage}%` }}
-                />
-              </div>
+              <p className="mt-2 flex items-center gap-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                <Footprints className="h-3.5 w-3.5" aria-hidden="true" />
+                {character.class} · Floor {gameState?.floor ?? character.floor}
+              </p>
             </div>
 
-            {/* Experience */}
-            <div>
-              <div className="flex justify-between text-xs mb-0.5 md:mb-1">
-                <span className="text-white">EXP</span>
-                <span className="text-white">{character.experience}</span>
-              </div>
-              <div className="h-1 md:h-1.5 bg-gray-100 rounded-full">
-                <div
-                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                  style={{ width: `${experiencePercentage}%` }}
-                />
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowEquipment(true)}
+              aria-label="View equipped items and powers"
+              className="rounded-xl border border-white/10 bg-white/5 p-3 text-amber-200 transition hover:border-amber-300/30 hover:bg-amber-300/10 focus-visible:ring-4 focus-visible:ring-amber-300/30 focus-visible:outline-none"
+            >
+              <Backpack className="h-5 w-5" aria-hidden="true" />
+            </button>
           </div>
 
-          {/* Combat Stats */}
-          {gameState && (
-            <div className="grid grid-cols-4 gap-0.5">
-              <StatItem label="Block" value={gameState.block} color="blue" />
-              <StatItem
-                label="Energy"
-                color="yellow"
-                value={`${gameState.currentEnergy}/${gameState.maxEnergy}`}
-              />
-              <StatItem label="Gold" value={character.gold} color="gold" />
-              <StatItem label="Kills" value={character.monstersSlain} color="purple" />
-            </div>
-          )}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ProgressStat
+              label="Health"
+              value={`${currentHealth}/${character.maxHealth}`}
+              percentage={healthPercentage}
+              barClassName="bg-gradient-to-r from-red-500 to-rose-400"
+            />
+            <ProgressStat
+              label="Experience"
+              value={`${character.experience % 100}/100`}
+              percentage={experiencePercentage}
+              barClassName="bg-gradient-to-r from-sky-500 to-cyan-300"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[330px]">
+            <StatItem icon={Shield} label="Block" value={gameState?.block ?? 0} />
+            <StatItem
+              icon={Zap}
+              label="Energy"
+              value={
+                gameState
+                  ? `${gameState.currentEnergy}/${gameState.maxEnergy}`
+                  : character.energy
+              }
+            />
+            <StatItem icon={Coins} label="Gold" value={character.gold} />
+            <StatItem
+              icon={Skull}
+              label="Slain"
+              value={character.monstersSlain}
+            />
+          </div>
         </div>
-      </div>
+      </section>
 
       <EquipmentModal
         isOpen={showEquipment}
@@ -134,28 +108,58 @@ export default function CharacterStats({
   );
 }
 
-interface StatItemProps {
+interface ProgressStatProps {
   label: string;
-  value: number | string;
-  color: "blue" | "yellow" | "gold" | "purple" | "green" | "red";
+  value: string;
+  percentage: number;
+  barClassName: string;
 }
 
-const StatItem = ({ label, value, color }: StatItemProps) => {
-  const colorClasses = {
-    blue: "text-blue-400 bg-blue-900/20",
-    yellow: "text-yellow-400 bg-yellow-900/20",
-    gold: "text-yellow-500 bg-yellow-900/20",
-    purple: "text-purple-400 bg-purple-900/20",
-    green: "text-green-400 bg-green-900/20",
-    red: "text-red-400 bg-red-900/20",
-  };
-
+function ProgressStat({
+  label,
+  value,
+  percentage,
+  barClassName,
+}: ProgressStatProps) {
   return (
-    <div
-      className={`flex flex-col items-center justify-center rounded-lg p-2 ${colorClasses[color]}`}
-    >
-      <div className="text-xs text-white/80">{label}</div>
-      <div className="text-sm font-medium text-white">{value}</div>
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
+        <span className="text-slate-300">{label}</span>
+        <span className="tabular-nums text-white">{value}</span>
+      </div>
+      <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(percentage)}
+        className="h-2 overflow-hidden rounded-full bg-white/10"
+      >
+        <div
+          className={`h-full rounded-full transition-[width] duration-300 ${barClassName}`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
     </div>
   );
-};
+}
+
+interface StatItemProps {
+  icon: typeof Shield;
+  label: string;
+  value: number | string;
+}
+
+function StatItem({ icon: Icon, label, value }: StatItemProps) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center">
+      <Icon className="mx-auto h-4 w-4 text-amber-200" aria-hidden="true" />
+      <div className="mt-1 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+        {label}
+      </div>
+      <div className="mt-0.5 text-sm font-bold tabular-nums text-white">
+        {value}
+      </div>
+    </div>
+  );
+}

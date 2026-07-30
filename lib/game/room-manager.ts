@@ -1,93 +1,33 @@
-import { Character } from "@/types/character";
-import { GameState, GameManager } from "./game-state";
-import { Enemy, EnemyManager } from "./enemy";
-import { CombatManager } from "./combat-manager";
+import { shuffle, type RandomSource } from "./random.ts";
 
-export enum RoomType {
-  BATTLE = "BATTLE",
-  REST = "REST",
-  SHOP = "SHOP",
-  EVENT = "EVENT",
+export const RoomType = {
+  BATTLE: "BATTLE",
+  REST: "REST",
+  SHOP: "SHOP",
+  EVENT: "EVENT",
+} as const;
+
+export type RoomType = (typeof RoomType)[keyof typeof RoomType];
+
+export const SELECTABLE_ROOMS: readonly RoomType[] = [
+  RoomType.BATTLE,
+  RoomType.REST,
+  RoomType.SHOP,
+  RoomType.EVENT,
+];
+
+export function getNextFloor(currentFloor: number): number {
+  return Math.max(1, Math.floor(currentFloor || 1)) + 1;
 }
 
-interface RoomManagerResult {
-  nextRoom: RoomType;
-  gameState: GameState;
-  enemies?: Enemy[];
-  combatManager?: CombatManager;
+export function isForcedRestFloor(floor: number): boolean {
+  return Math.max(1, Math.floor(floor || 1)) % 5 === 0;
 }
 
-export class RoomManager {
-  static handleNextRoom(
-    character: Character,
-    currentFloor: number
-  ): RoomManagerResult {
-    const nextFloor = currentFloor + 1;
-
-    // Special case: force rest site every 5 floors
-    if (nextFloor % 5 === 0) {
-      return {
-        nextRoom: RoomType.REST,
-        gameState: this.initializeGameState(character, nextFloor),
-      };
-    }
-
-    // Determine next room type (weighted random)
-    const roomWeights = {
-      [RoomType.BATTLE]: 0.6,
-      [RoomType.REST]: 0.15,
-      [RoomType.SHOP]: 0.15,
-      [RoomType.EVENT]: 0.1,
-    };
-
-    const random = Math.random();
-    let cumulativeWeight = 0;
-    let selectedRoom = RoomType.BATTLE;
-
-    for (const [room, weight] of Object.entries(roomWeights)) {
-      cumulativeWeight += weight;
-      if (random <= cumulativeWeight) {
-        selectedRoom = room as RoomType;
-        break;
-      }
-    }
-
-    const gameState = this.initializeGameState(character, nextFloor);
-
-    if (selectedRoom === RoomType.BATTLE) {
-      const enemy = EnemyManager.createEnemy(nextFloor);
-      const combatManager = new CombatManager(gameState, [enemy]);
-      return {
-        nextRoom: selectedRoom,
-        gameState,
-        enemies: [enemy],
-        combatManager,
-      };
-    }
-
-    return {
-      nextRoom: selectedRoom,
-      gameState,
-    };
-  }
-
-  private static initializeGameState(
-    character: Character,
-    floor: number
-  ): GameState {
-    const enhancedCharacter: Character = {
-      ...character,
-      equipment: character.equipment || [],
-      powers: character.powers || [],
-      block: 0,
-      deck: [],
-      hand: [],
-      discardPile: [],
-    };
-
-    const gameManager = new GameManager(enhancedCharacter);
-    const gameState = gameManager.getState();
-    gameState.floor = floor;
-    return gameState;
-  }
+export function getRoomChoices(
+  random: RandomSource = Math.random,
+  count = 2
+): RoomType[] {
+  const safeCount = Math.max(1, Math.min(count, SELECTABLE_ROOMS.length));
+  return shuffle(SELECTABLE_ROOMS, random).slice(0, safeCount);
 }

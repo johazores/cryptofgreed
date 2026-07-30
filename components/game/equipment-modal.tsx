@@ -1,4 +1,5 @@
-import { Character } from "@/types/character";
+import type { Character } from "@/types/character";
+import { PackageOpen, Sparkles } from "lucide-react";
 import Modal from "../modal";
 
 interface EquipmentModalProps {
@@ -12,87 +13,118 @@ export default function EquipmentModal({
   onClose,
   character,
 }: EquipmentModalProps) {
-  // Add null checks for both arrays
-  const equippedItems = character?.equipment || [];
-  const powers = character?.powers || [];
+  const equippedItems = character.equipment || [];
+  const powers = character.powers || [];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl">
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-medievalsharp text-gray-900">
-            Equipment & Items
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="2xl"
+      ariaLabel="Equipment and powers"
+      showCloseButton
+    >
+      <div className="p-5 sm:p-7">
+        <div className="pr-10">
+          <p className="text-xs font-bold tracking-[0.2em] text-primary uppercase">
+            Loadout
+          </p>
+          <h2 className="mt-1 font-medievalsharp text-3xl text-slate-950">
+            Equipment & Powers
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+          <p className="mt-2 text-sm text-slate-600">
+            One item can be equipped in each slot. Buying a new item replaces the
+            current item in that slot.
+          </p>
         </div>
 
-        {/* Equipment Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medievalsharp text-gray-800 mb-3">
-            Equipment
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {equippedItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{item.name}</h4>
-                    <p className="text-sm text-gray-600">{item.description}</p>
-                  </div>
-                  <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded">
-                    {item.slot}
-                  </span>
-                </div>
-                <div className="mt-2 text-sm text-gray-700">
-                  {Object.entries(item.stats).map(([stat, value]) => (
-                    <span key={stat} className="mr-3">
-                      {`${stat}: +${value}`}
+        <section className="mt-7">
+          <h3 className="font-medievalsharp text-xl text-slate-900">Equipment</h3>
+          {equippedItems.length === 0 ? (
+            <EmptyState
+              icon={<PackageOpen className="h-6 w-6" aria-hidden="true" />}
+              title="No equipment yet"
+              description="Visit a merchant room to purchase your first item."
+            />
+          ) : (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {equippedItems.map((item) => (
+                <article
+                  key={item.id}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h4 className="font-semibold text-slate-950">{item.name}</h4>
+                      <p className="mt-1 text-sm leading-5 text-slate-600">
+                        {item.description}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-bold tracking-wide text-slate-700 uppercase">
+                      {item.slot}
                     </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {Object.entries(item.stats).map(([stat, value]) => (
+                      <span
+                        key={stat}
+                        className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 capitalize"
+                      >
+                        {stat} +{value}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
-        {/* Powers Section */}
-        <div>
-          <h3 className="text-lg font-medievalsharp text-gray-800 mb-3">
-            Powers
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {powers.map((power) => (
-              <div
-                key={power.id}
-                className="bg-purple-50 rounded-lg p-4 border border-purple-200"
-              >
-                <h4 className="font-medium text-purple-900">{power.name}</h4>
-                <p className="text-sm text-purple-700">{power.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <section className="mt-7 border-t border-slate-200 pt-6">
+          <h3 className="font-medievalsharp text-xl text-slate-900">Powers</h3>
+          {powers.length === 0 ? (
+            <EmptyState
+              icon={<Sparkles className="h-6 w-6" aria-hidden="true" />}
+              title="No powers discovered"
+              description="Future run rewards will appear here."
+            />
+          ) : (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {powers.map((power) => (
+                <article
+                  key={power.id}
+                  className="rounded-xl border border-violet-200 bg-violet-50 p-4"
+                >
+                  <h4 className="font-semibold text-violet-950">{power.name}</h4>
+                  <p className="mt-1 text-sm text-violet-800">
+                    {power.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </Modal>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-slate-600">
+      <div className="rounded-lg bg-white p-2 text-slate-500 shadow-sm">{icon}</div>
+      <div>
+        <p className="font-semibold text-slate-800">{title}</p>
+        <p className="text-sm">{description}</p>
+      </div>
+    </div>
   );
 }

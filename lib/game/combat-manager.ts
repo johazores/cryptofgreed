@@ -1,4 +1,5 @@
 import type { Card } from "../cards";
+import type { ItemStats } from "../../types/character";
 import type { Enemy } from "./enemy";
 import type { GameState } from "./game-state";
 import { shuffle, type RandomSource } from "./random.ts";
@@ -57,25 +58,29 @@ export class CombatManager {
 
   private applyCardEffects(card: Card, targetIndex: number) {
     const effects = card.effects;
+    const attackBonus = this.getEquipmentBonus("attack");
+    const defenseBonus = this.getEquipmentBonus("defense");
 
     if (effects.damage) {
+      const damage = effects.damage + attackBonus;
+
       if (effects.special === "twice") {
         const target = this.combatState.enemies[targetIndex];
         if (target) {
-          this.dealDamageToEnemy(target, effects.damage);
-          this.dealDamageToEnemy(target, effects.damage);
+          this.dealDamageToEnemy(target, damage);
+          this.dealDamageToEnemy(target, damage);
         }
       } else if (effects.special === "aoe") {
         const targets = [...this.combatState.enemies];
-        targets.forEach((target) => this.dealDamageToEnemy(target, effects.damage!));
+        targets.forEach((target) => this.dealDamageToEnemy(target, damage));
       } else {
         const target = this.combatState.enemies[targetIndex];
-        if (target) this.dealDamageToEnemy(target, effects.damage);
+        if (target) this.dealDamageToEnemy(target, damage);
       }
     }
 
     if (effects.block) {
-      this.gameState.block += effects.block;
+      this.gameState.block += effects.block + defenseBonus;
     }
 
     if (effects.heal) {
@@ -84,6 +89,13 @@ export class CombatManager {
         this.gameState.character.maxHealth
       );
     }
+  }
+
+  private getEquipmentBonus(stat: keyof ItemStats): number {
+    return this.gameState.character.equipment.reduce((total, item) => {
+      const value = item.stats?.[stat];
+      return total + (typeof value === "number" ? value : 0);
+    }, 0);
   }
 
   private dealDamageToEnemy(enemy: Enemy, damage: number) {

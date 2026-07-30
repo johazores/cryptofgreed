@@ -14,6 +14,15 @@ const strike: Card = {
   effects: { damage: 6 },
 };
 
+const defend: Card = {
+  id: "defend",
+  name: "Defend",
+  description: "Gain 5 block.",
+  type: "SKILL",
+  energy: 1,
+  effects: { block: 5 },
+};
+
 function createState(): GameState {
   return {
     floor: 1,
@@ -71,21 +80,13 @@ function createEnemy(health = 20): Enemy {
 test("endTurn resolves exactly one enemy turn and starts the next player turn", () => {
   const manager = new CombatManager(createState(), [createEnemy()]);
 
-  assert.equal(
-    manager.getState().hand.length,
-    1,
-    "the constructor must not draw a second opening hand"
-  );
+  assert.equal(manager.getState().hand.length, 1);
   assert.equal(manager.endTurn(), true);
 
   const state = manager.getState();
   const combat = manager.getCombatState();
 
-  assert.equal(
-    state.character.currentHealth,
-    96,
-    "2 block absorbs part of one 6-damage attack"
-  );
+  assert.equal(state.character.currentHealth, 96);
   assert.equal(state.block, 0);
   assert.equal(combat.turn, 2);
   assert.equal(combat.isPlayerTurn, true);
@@ -93,16 +94,38 @@ test("endTurn resolves exactly one enemy turn and starts the next player turn", 
 
 test("defeated enemies remain available for victory rewards", () => {
   const state = createState();
-  state.hand = [
-    {
-      ...strike,
-      effects: { damage: 20 },
-    },
-  ];
+  state.hand = [{ ...strike, effects: { damage: 20 } }];
   const manager = new CombatManager(state, [createEnemy(20)]);
 
   assert.equal(manager.playCard(0, 0), true);
   assert.equal(manager.getState().status, "VICTORY");
   assert.equal(manager.getCombatState().enemies.length, 0);
   assert.equal(manager.getCombatState().defeatedEnemies.length, 1);
+});
+
+test("equipment bonuses improve attack and block cards", () => {
+  const state = createState();
+  state.character.equipment = [
+    {
+      id: "weapon-1",
+      name: "Iron Blade",
+      description: "Test weapon",
+      slot: "WEAPON",
+      stats: { attack: 3 },
+    },
+    {
+      id: "armor-1",
+      name: "Iron Armor",
+      description: "Test armor",
+      slot: "ARMOR",
+      stats: { defense: 2 },
+    },
+  ];
+  state.hand = [strike, defend];
+  const manager = new CombatManager(state, [createEnemy(20)]);
+
+  assert.equal(manager.playCard(0, 0), true);
+  assert.equal(manager.getCombatState().enemies[0].currentHealth, 11);
+  assert.equal(manager.playCard(0, 0), true);
+  assert.equal(manager.getState().block, 9);
 });
