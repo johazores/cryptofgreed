@@ -7,45 +7,53 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { characterId, updates } = await req.json();
+    const { characterId, updates = {} } = await req.json();
 
-    // Verify character belongs to user
+    if (!characterId || typeof characterId !== "string") {
+      return NextResponse.json(
+        { message: "Character ID is required" },
+        { status: 400 }
+      );
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, "isDead")) {
+      return NextResponse.json(
+        { message: "Use the dedicated death or revival endpoint" },
+        { status: 400 }
+      );
+    }
+
     const character = await prisma.character.findUnique({
       where: { id: characterId },
     });
 
     if (!character || character.userId !== session.user.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { message: "Character not found" },
+        { status: 404 }
+      );
     }
 
-    // Calculate new level if experience is being updated
     let newLevel = character.level;
     if (updates.experience !== undefined) {
-      // Calculate new level based on total experience
       newLevel = Math.floor(updates.experience / 100) + 1;
     }
 
-    // Calculate new maxHealth based on level
-    const baseHealth = 100;
-    const healthPerLevel = 20;
-    const newMaxHealth = baseHealth + (newLevel - 1) * healthPerLevel;
+    const newMaxHealth = 100 + (newLevel - 1) * 20;
 
-    // Update character stats
     const updatedCharacter = await prisma.character.update({
       where: { id: characterId },
       data: {
         gold: updates.gold ?? character.gold,
         experience: updates.experience ?? character.experience,
         currentHealth: updates.currentHealth ?? character.currentHealth,
-        isDead: updates.isDead ?? character.isDead,
-        monstersSlain: updates.monstersSlain ?? character.monstersSlain, // Make sure this is included
-        floor: updates.floor ?? character.floor, // Make sure floor is included too
+        monstersSlain: updates.monstersSlain ?? character.monstersSlain,
+        floor: updates.floor ?? character.floor,
         level: newLevel,
         maxHealth: newMaxHealth,
-        // If leveling up, restore health to new max
         ...(newLevel > character.level && {
           currentHealth: newMaxHealth,
         }),
@@ -59,6 +67,9 @@ export async function POST(req: Request) {
     return NextResponse.json(updatedCharacter);
   } catch (error) {
     console.error("Error updating character:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
