@@ -159,7 +159,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const markCharacterAsDead = useCallback(
     async (characterId: string) => {
       try {
-        const response = await fetch("/api/character/death", {
+        const response = await fetch("/api/characters/death", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ characterId }),

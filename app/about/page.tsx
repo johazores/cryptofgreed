@@ -1,96 +1,88 @@
-import React from "react";
-import { Metadata } from "next";
-import {
-  GiCrownedSkull,
-  GiScrollUnfurled,
-  GiTeamDowngrade,
-} from "react-icons/gi";
+import type { Metadata } from "next";
+import { Compass, Landmark, Swords } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "About - Crypt of Greed",
   description:
-    "Learn about Crypt of Greed, a roguelike card game with NFT integration built on Core DAO blockchain.",
+    "Learn about Crypt of Greed, an early turn-based deckbuilding roguelite prototype built around a bank-or-risk Greed mechanic.",
 };
+
+const pillars = [
+  {
+    title: "Readable combat",
+    description:
+      "Enemy intent, energy, block, and card effects should make every turn understandable before the player commits.",
+    icon: Swords,
+  },
+  {
+    title: "Meaningful paths",
+    description:
+      "Battles, rest sites, merchants, and events should change the run instead of acting as disconnected screens.",
+    icon: Compass,
+  },
+  {
+    title: "Greed with consequences",
+    description:
+      "The defining goal is a fair decision between securing treasure and risking it for a stronger outcome.",
+    icon: Landmark,
+  },
+];
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="relative py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-5" />
+    <div className="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_top,#30202a_0%,#111217_38%,#f4f1ea_38%)] px-4 py-10 sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-6xl">
+        <header className="rounded-3xl border border-white/10 bg-black/30 p-6 text-center text-white shadow-2xl backdrop-blur sm:p-10">
+          <p className="text-xs font-bold tracking-[0.22em] text-amber-200/70 uppercase">
+            Early gameplay prototype
+          </p>
+          <h1 className="mt-3 font-medievalsharp text-5xl sm:text-6xl">
+            About Crypt of Greed
+          </h1>
+          <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
+            Crypt of Greed is being developed as a premium deckbuilding roguelite.
+            The prototype exists to prove one central idea: knowing when to secure
+            what you have and when to risk one more dangerous room.
+          </p>
+        </header>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="font-medievalsharp text-5xl font-bold text-gray-900 mb-8">
-              About <span className="text-primary">Crypt of Greed</span>
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Discover the story behind the most immersive blockchain-powered
-              roguelike card game.
+        <section className="mt-6 grid gap-5 md:grid-cols-3">
+          {pillars.map(({ title, description, icon: Icon }) => (
+            <article
+              key={title}
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Icon className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <h2 className="mt-5 font-medievalsharp text-2xl text-slate-950">
+                {title}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+            </article>
+          ))}
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
+          <p className="text-xs font-bold tracking-[0.2em] text-primary uppercase">
+            Current direction
+          </p>
+          <h2 className="mt-2 font-medievalsharp text-3xl text-slate-950 sm:text-4xl">
+            Prove the game before scaling it
+          </h2>
+          <div className="mt-4 grid gap-6 text-sm leading-6 text-slate-600 md:grid-cols-2">
+            <p>
+              The browser build currently validates combat, character progression,
+              room selection, equipment, revival, onboarding, and responsive UI.
+              Run persistence and the full Greed loop are the next major systems.
+            </p>
+            <p>
+              Blockchain wallets, NFT custody, and pay-to-earn mechanics are not
+              part of the active product direction. Public claims and source code
+              are kept aligned with what the prototype actually supports.
             </p>
           </div>
-
-          <div className="mt-20 grid grid-cols-1 gap-16 lg:grid-cols-3">
-            <div className="text-center">
-              <div className="flex justify-center mb-6">
-                <div className="bg-primary/10 p-6 rounded-full">
-                  <GiScrollUnfurled className="h-12 w-12 text-primary" />
-                </div>
-              </div>
-              <h3 className="font-medievalsharp text-2xl font-bold text-gray-900 mb-4">
-                Our Story
-              </h3>
-              <p className="text-gray-600">
-                Born from a passion for roguelike games and blockchain
-                technology, Crypt of Greed combines classic dungeon crawling
-                with modern NFT integration.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="flex justify-center mb-6">
-                <div className="bg-primary/10 p-6 rounded-full">
-                  <GiCrownedSkull className="h-12 w-12 text-primary" />
-                </div>
-              </div>
-              <h3 className="font-medievalsharp text-2xl font-bold text-gray-900 mb-4">
-                Our Mission
-              </h3>
-              <p className="text-gray-600">
-                We aim to create an engaging gaming experience where every
-                achievement and rare item holds real value through blockchain
-                technology.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="flex justify-center mb-6">
-                <div className="bg-primary/10 p-6 rounded-full">
-                  <GiTeamDowngrade className="h-12 w-12 text-primary" />
-                </div>
-              </div>
-              <h3 className="font-medievalsharp text-2xl font-bold text-gray-900 mb-4">
-                Our Team
-              </h3>
-              <p className="text-gray-600">
-                A dedicated group of gamers, developers, and blockchain
-                enthusiasts working together to bring this unique gaming
-                experience to life.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-20 bg-gray-50 rounded-2xl p-8 lg:p-12">
-            <h2 className="font-medievalsharp text-3xl font-bold text-gray-900 mb-6 text-center">
-              Built on Core DAO
-            </h2>
-            <p className="text-gray-600 text-center max-w-3xl mx-auto">
-              Leveraging the power of Core DAO blockchain, we provide a seamless
-              gaming experience with true ownership of in-game assets through
-              NFTs, all while maintaining low transaction costs and high
-              performance.
-            </p>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   );

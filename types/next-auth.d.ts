@@ -7,8 +7,6 @@ declare module "next-auth" {
       email: string;
       name?: string | null;
       image?: string | null;
-      walletAddress?: string | null;
-      custodialWalletAddress?: string | null;
     };
   }
 
@@ -16,7 +14,5 @@ declare module "next-auth" {
     id: string;
     email: string;
     name?: string | null;
-    walletAddress?: string | null;
-    custodialWalletAddress?: string | null;
   }
 }

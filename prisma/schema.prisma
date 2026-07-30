@@ -8,19 +8,15 @@ generator client {
 }
 
 model User {
-  id                     String      @id @default(auto()) @map("_id") @db.ObjectId
-  email                  String      @unique
-  password               String
-  role                   String      @default("USER")
-  name                   String?
-  walletAddress          String?
-  custodialWalletAddress String?             // Legacy only; new accounts do not receive custodial wallets
-  encryptedPrivateKey    String?             // Legacy only; no new private keys are stored
-  crystals               Int         @default(0)
-  bankItems              BankItem[]
-  characters             Character[]
-  createdAt              DateTime    @default(now())
-  updatedAt              DateTime    @updatedAt
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  email      String      @unique
+  password   String
+  role       String      @default("USER")
+  name       String?
+  crystals   Int         @default(0)
+  characters Character[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 }
 
 model Character {
@@ -51,33 +47,16 @@ enum FightingStyle {
 }
 
 model Equipment {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  description     String
-  slot            EquipmentSlot
-  tier            ItemTier
-  stats           Json
-  contractAddress String?        // Legacy NFT reference; normal shop items do not use it
-  nftId           String?        // Legacy NFT reference; normal shop items do not use it
-  character       Character?     @relation(fields: [characterId], references: [id])
-  characterId     String?        @db.ObjectId
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-}
-
-model BankItem {
-  id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  description     String
-  slot            EquipmentSlot
-  tier            ItemTier
-  contractAddress String
-  stats           Json
-  nftId           String
-  user            User          @relation(fields: [userId], references: [id])
-  userId          String        @db.ObjectId
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  slot        EquipmentSlot
+  tier        ItemTier
+  stats       Json
+  character   Character?     @relation(fields: [characterId], references: [id])
+  characterId String?        @db.ObjectId
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }
 
 model Power {

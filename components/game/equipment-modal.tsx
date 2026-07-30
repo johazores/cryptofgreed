@@ -1,6 +1,6 @@
 import type { Character } from "@/types/character";
 import { PackageOpen, Sparkles } from "lucide-react";
-import Modal from "../modal";
+import Modal from "@/components/ui/modal";
 
 interface EquipmentModalProps {
   isOpen: boolean;

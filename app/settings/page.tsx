@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { ArrowLeft, Mail, Save, User } from "lucide-react";
 import { toast } from "sonner";
 import Button from "@/components/ui/button";
-import TextField from "@/components/textfield";
+import TextField from "@/components/ui/text-field";
 
 export default function SettingsPage() {
   const router = useRouter();

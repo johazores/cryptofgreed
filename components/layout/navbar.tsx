@@ -6,9 +6,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
-import Auth from "@/components/auth";
-import Modal from "@/components/modal";
+import Auth from "@/components/auth/auth-form";
 import Button from "@/components/ui/button";
+import Modal from "@/components/ui/modal";
 import UserAvatar from "./user-avatar";
 
 const publicLinks = [
@@ -59,7 +59,8 @@ export default function Navbar() {
 
             <div className="hidden items-center gap-1 md:flex">
               {links.map((link) => {
-                const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+                const active =
+                  pathname === link.href || pathname.startsWith(`${link.href}/`);
                 return (
                   <Link
                     key={link.href}
@@ -88,7 +89,9 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen((current) => !current)}
-                aria-label={isMobileMenuOpen ? "Close navigation" : "Open navigation"}
+                aria-label={
+                  isMobileMenuOpen ? "Close navigation" : "Open navigation"
+                }
                 aria-expanded={isMobileMenuOpen}
                 className="rounded-lg border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-100 focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:outline-none md:hidden"
               >
@@ -106,14 +109,17 @@ export default function Navbar() {
           <div className="border-t border-slate-200 bg-white px-3 py-3 shadow-lg md:hidden">
             <div className="mx-auto flex max-w-7xl flex-col gap-1">
               {links.map((link) => {
-                const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+                const active =
+                  pathname === link.href || pathname.startsWith(`${link.href}/`);
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
                     aria-current={active ? "page" : undefined}
                     className={`rounded-xl px-4 py-3 text-sm font-semibold ${
-                      active ? "bg-primary/10 text-primary" : "text-slate-700 hover:bg-slate-100"
+                      active
+                        ? "bg-primary/10 text-primary"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
                     {link.label}
