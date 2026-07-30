@@ -13,9 +13,9 @@ model User {
   password               String
   role                   String      @default("USER")
   name                   String?
-  walletAddress          String?     @unique  // External wallet
-  custodialWalletAddress String     @unique  // Our managed wallet
-  encryptedPrivateKey    String      // Encrypted private key for custodial wallet
+  walletAddress          String?     @unique
+  custodialWalletAddress String?     @unique // Legacy only; new accounts do not receive custodial wallets
+  encryptedPrivateKey    String?     // Legacy only; no new private keys are stored
   crystals               Int         @default(0)
   bankItems              BankItem[]
   characters             Character[]
@@ -35,9 +35,9 @@ model Character {
   isDead        Boolean        @default(false)
   experience    Int            @default(0)
   level         Int            @default(1)
-  floor         Int            @default(1) 
-  equipment     Equipment[]    // NFT equipment for current run
-  powers        Power[]        // Special abilities gained during run
+  floor         Int            @default(1)
+  equipment     Equipment[]
+  powers        Power[]
   user          User           @relation(fields: [userId], references: [id])
   userId        String         @db.ObjectId
   createdAt     DateTime       @default(now())
@@ -45,9 +45,9 @@ model Character {
 }
 
 enum FightingStyle {
-  MELEE    // Self-buffs + Defense
-  RANGE    // Debuffs + Status Effects
-  MAGIC    // AOE + Utility
+  MELEE
+  RANGE
+  MAGIC
 }
 
 model Equipment {
@@ -56,35 +56,35 @@ model Equipment {
   description     String
   slot            EquipmentSlot
   tier            ItemTier
-  stats           Json          // {"hp": 20, "armor": 5, "damage": 10, etc}
-  contractAddress String        // NFT contract address
-  nftId           String        // NFT reference
+  stats           Json
+  contractAddress String
+  nftId           String
   character       Character?    @relation(fields: [characterId], references: [id])
-  characterId     String?      @db.ObjectId
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  characterId     String?       @db.ObjectId
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 model BankItem {
-  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
   name            String
   description     String
   slot            EquipmentSlot
   tier            ItemTier
   contractAddress String
-  stats           Json      // {"hp": 20, "armor": 5, "damage": 10, etc}
-  nftId           String    // NFT reference
-  user            User      @relation(fields: [userId], references: [id])
-  userId          String    @db.ObjectId
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  stats           Json
+  nftId           String
+  user            User          @relation(fields: [userId], references: [id])
+  userId          String        @db.ObjectId
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 model Power {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String
-  effect      Json      // Power-specific effects
+  effect      Json
   character   Character @relation(fields: [characterId], references: [id])
   characterId String    @db.ObjectId
   createdAt   DateTime  @default(now())
@@ -98,10 +98,10 @@ enum EquipmentSlot {
 }
 
 enum ItemTier {
-  T0    // Starter equipment
-  T1    // Common
-  T2    // Uncommon
-  T3    // Rare
-  T4    // Epic
-  T5    // Legendary
+  T0
+  T1
+  T2
+  T3
+  T4
+  T5
 }
