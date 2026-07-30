@@ -1,6 +1,6 @@
 # Crypt of Greed
 
-Crypt of Greed is an early browser-based prototype for a turn-based deckbuilding roguelite. The current development goal is to validate a premium, offline-first game centered on a clear **bank-or-risk Greed mechanic** before expanding content or committing to a production engine.
+Crypt of Greed is an early browser-based prototype for a turn-based deckbuilding roguelite. The current goal is to validate a premium, offline-first game centered on a clear **bank-or-risk Greed mechanic** before expanding content or committing to a production engine.
 
 The repository is not a release-ready Steam or console build. The product audit and source-of-truth plans are available in:
 
@@ -22,8 +22,9 @@ The repository is not a release-ready Steam or console build. The product audit 
 - Tailwind CSS
 - NextAuth
 - Prisma with MongoDB
+- Node.js built-in test runner
 
-Legacy blockchain prototype files may remain for migration review, but custodial wallet creation and NFT custody APIs are disabled and are not part of the commercial game path.
+Custodial wallets and NFT custody are disabled. New accounts do not receive blockchain wallets or stored private keys.
 
 ## Requirements
 
@@ -47,11 +48,13 @@ NEXTAUTH_SECRET=
 NEXTAUTH_URL=http://localhost:3000
 ```
 
-3. Apply the current Prisma schema to the development database:
+3. Synchronize the development schema:
 
 ```bash
 npx prisma db push
 ```
+
+This step makes legacy wallet fields optional and allows normal non-NFT equipment records.
 
 4. Start development:
 
@@ -69,37 +72,43 @@ npm run typecheck
 npm run build
 ```
 
-`npm test` covers isolated combat, progression, reward, deterministic shuffle, and revival rules that do not require a database or browser.
-
-## Security Status
-
-- new registrations do not create custodial wallets
-- no new private keys are generated or stored
-- legacy custody fields are nullable for existing-data compatibility
-- NFT deposit, withdrawal, bank, and management APIs return `410 Gone`
-- the wallet page remains only as a clear disabled-state notice
-
-Existing legacy private-key records must be handled through a separate migration and deletion plan before any production deployment.
+The game tests cover combat turns, rewards, revival rules, seeded shuffling, floor progression, room choices, shop inventory, and equipment combat bonuses.
 
 ## Verified Core Rules
 
-- persisted character floors initialize the battle floor
-- opening combat does not draw two hands
-- ending a turn resolves one enemy turn
-- player block absorbs the enemy attack before resetting
-- defeated enemies remain available for reward calculation
-- seeded shuffling is repeatable
-- revival requires a dead character and sufficient crystals
+- persisted character floors initialize battle correctly
+- opening combat draws one hand
+- ending a turn resolves one enemy phase
+- player block absorbs damage before resetting
+- defeated enemies remain available for rewards
+- room choices are unique and floor progression is centralized
+- every fifth floor forces a rest room
+- shop inventory is deterministic for the current floor
+- shop purchases are authenticated and deduct gold atomically
+- one equipment item is stored per slot
+- weapon and defensive equipment improve relevant cards
+- revival cost and ownership are enforced by the server
+
+## UI and UX Improvements
+
+- responsive dark-fantasy game shell across combat, rest, shop, and event rooms
+- one centralized room-selection flow instead of duplicate combat navigation
+- accessible card buttons with keyboard focus and disabled states
+- visible enemy intent, health, block, turn, floor, energy, and reward information
+- clearer loading, error, empty, purchase, and insufficient-resource states
+- dialogs support Escape behavior, focus, ARIA labels, and safer non-dismissible decisions
+- event choices show their cost and outcome before commitment
+- mobile combat no longer relies on a large fixed overlay covering the battlefield
 
 ## Known Limitations
 
-- the full run/deck does not yet persist across every room
-- content is limited to a small starter card and enemy set
-- rest, shop, and event rooms remain prototype-level
-- no controller, keyboard-first input layer, audio system, accessibility suite, or native desktop build exists
-- save recovery, cloud saves, achievements, localization, and Steam integration are not implemented
-- legacy blockchain models and files still require a deliberate archival or migration decision
-- a clean production build still requires configured services and dependencies
+- the full deck and route history do not yet persist as one versioned run
+- Greed, Hoard, banking, extraction, relics, card rewards, and deck upgrades are not implemented
+- content remains limited to a small starter card and enemy set
+- equipment bonuses are intentionally simple and need balancing
+- no controller mapping layer, audio system, native desktop build, localization, achievements, or cloud saves exist
+- existing legacy private-key records still require a reviewed one-time migration and deletion plan
+- a clean production build requires configured local services and installed dependencies
 
 ## Branch and Commit Rules
 
