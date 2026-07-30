@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { CombatManager } from "@/lib/game/combat-manager";
 import { calculateCombatRewards } from "@/lib/game/rewards";
 import { RoomType } from "@/lib/game/room-manager";
+import { REVIVE_COST } from "@/lib/game/revival";
 import GameModal from "../end-battle-modal";
 import RoomSelectionModal from "../room-selection-modal";
 import CharacterStats from "../character-stats";
@@ -132,14 +133,9 @@ export default function Combat({ onExit }: CombatProps) {
 
   const handleRevive = async () => {
     try {
-      await reviveCharacter(character.id);
-      const revivedState = createGameState({
-        ...character,
-        currentHealth: character.maxHealth,
-        isDead: false,
-      });
-
-      initializeBattle(revivedState);
+      const result = await reviveCharacter(character.id);
+      setUserCrystals(result.crystalsRemaining);
+      initializeBattle(createGameState(result.character));
       setShowDefeat(false);
     } catch (error) {
       console.error("Failed to revive character:", error);
@@ -348,7 +344,7 @@ export default function Combat({ onExit }: CombatProps) {
             onClose={() => setShowDefeat(false)}
             type="defeat"
             onRevive={handleRevive}
-            crystalCost={100}
+            crystalCost={REVIVE_COST}
             userCrystals={userCrystals}
           />
           <RoomSelectionModal
