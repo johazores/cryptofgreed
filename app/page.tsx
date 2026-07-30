@@ -1,139 +1,107 @@
 import LoginButton from "@/components/login-button";
 import {
-  GiCrownedSkull,
-  GiTreasureMap,
   GiCardPlay,
   GiChest,
-  GiCrossedSwords,
-  GiScrollUnfurled,
+  GiCrownedSkull,
+  GiTreasureMap,
 } from "react-icons/gi";
-import Link from "next/link";
+
+const features = [
+  {
+    title: "Turn-Based Combat",
+    description:
+      "Read enemy intent, manage limited energy, and sequence attack and defense cards each turn.",
+    icon: GiCardPlay,
+  },
+  {
+    title: "Choose Your Path",
+    description:
+      "Move between battles, rest sites, shops, and events while the run structure is being expanded.",
+    icon: GiTreasureMap,
+  },
+  {
+    title: "Greed System in Development",
+    description:
+      "The next major milestone introduces the choice to bank treasure safely or risk it for stronger rewards.",
+    icon: GiChest,
+  },
+];
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <div className="relative">
-        {/* Decorative background pattern */}
+      <section className="relative">
         <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-5" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+        <div className="relative mx-auto max-w-7xl px-4 py-28 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="flex justify-center mb-8">
-              <GiCrownedSkull className="h-32 w-32 text-primary animate-float" />
+            <span className="mb-6 inline-flex rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-900">
+              Early gameplay prototype
+            </span>
+            <div className="mb-8 flex justify-center">
+              <GiCrownedSkull className="text-primary h-32 w-32 animate-float" />
             </div>
-            <h1 className="font-medievalsharp text-7xl font-bold mb-6 text-gray-900">
+            <h1 className="mb-6 font-medievalsharp text-6xl font-bold text-gray-900 md:text-7xl">
               Crypt of <span className="text-primary">Greed</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-              Embark on an epic roguelike card adventure where every decision
-              shapes your destiny. Battle monsters, collect treasures, and forge
-              your legacy in the depths of the crypt.
+            <p className="mx-auto mb-12 max-w-2xl text-xl text-gray-600">
+              A turn-based deckbuilding roguelite prototype where the long-term
+              goal is simple: decide when to secure your treasure and when greed
+              is worth one more dangerous room.
             </p>
             <LoginButton />
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Features Section */}
-      <div className="bg-gray-50 py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="font-medievalsharp text-4xl text-gray-900 mb-4">
-              Begin Your Adventure
+      <section className="bg-gray-50 py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 font-medievalsharp text-4xl text-gray-900">
+              Current Game Direction
             </h2>
-            <div className="w-24 h-1 bg-primary mx-auto"></div>
+            <div className="bg-primary mx-auto h-1 w-24" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="bg-white rounded-2xl shadow-xl p-8 transform hover:-translate-y-1 transition-transform duration-300">
-              <div className="flex justify-center mb-6">
-                <div className="bg-primary/10 p-4 rounded-full">
-                  <GiCardPlay className="h-12 w-12 text-primary" />
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
+            {features.map(({ title, description, icon: Icon }) => (
+              <article
+                key={title}
+                className="rounded-2xl bg-white p-8 shadow-xl transition-transform duration-300 hover:-translate-y-1"
+              >
+                <div className="mb-6 flex justify-center">
+                  <div className="bg-primary/10 rounded-full p-4">
+                    <Icon className="text-primary h-12 w-12" />
+                  </div>
                 </div>
-              </div>
-              <h3 className="font-medievalsharp text-2xl text-gray-900 mb-4">
-                Strategic Combat
-              </h3>
-              <p className="text-gray-600">
-                Master unique card combinations and build powerful decks to
-                overcome challenging encounters.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-xl p-8 transform hover:-translate-y-1 transition-transform duration-300">
-              <div className="flex justify-center mb-6">
-                <div className="bg-primary/10 p-4 rounded-full">
-                  <GiTreasureMap className="h-12 w-12 text-primary" />
-                </div>
-              </div>
-              <h3 className="font-medievalsharp text-2xl text-gray-900 mb-4">
-                Dynamic Adventures
-              </h3>
-              <p className="text-gray-600">
-                Every run is unique with procedurally generated dungeons and
-                diverse enemy encounters.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-xl p-8 transform hover:-translate-y-1 transition-transform duration-300">
-              <div className="flex justify-center mb-6">
-                <div className="bg-primary/10 p-4 rounded-full">
-                  <GiChest className="h-12 w-12 text-primary" />
-                </div>
-              </div>
-              <h3 className="font-medievalsharp text-2xl text-gray-900 mb-4">
-                NFT Integration
-              </h3>
-              <p className="text-gray-600">
-                Turn your achievements and rare items into NFTs on the Core DAO
-                blockchain.
-              </p>
-            </div>
+                <h3 className="mb-4 font-medievalsharp text-2xl text-gray-900">
+                  {title}
+                </h3>
+                <p className="text-gray-600">{description}</p>
+              </article>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Stats Section */}
-      <div className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="font-medievalsharp text-4xl text-primary mb-2">
-                1000+
-              </div>
-              <div className="text-gray-600">Unique Cards</div>
-            </div>
-            <div>
-              <div className="font-medievalsharp text-4xl text-primary mb-2">
-                50+
-              </div>
-              <div className="text-gray-600">Boss Encounters</div>
-            </div>
-            <div>
-              <div className="font-medievalsharp text-4xl text-primary mb-2">
-                3
-              </div>
-              <div className="text-gray-600">Character Classes</div>
-            </div>
-            <div>
-              <div className="font-medievalsharp text-4xl text-primary mb-2">
-                ∞
-              </div>
-              <div className="text-gray-600">Possible Builds</div>
-            </div>
-          </div>
+      <section className="py-20">
+        <div className="mx-auto max-w-4xl px-4 text-center">
+          <h2 className="mb-4 font-medievalsharp text-3xl text-gray-900">
+            What Is Playable Today
+          </h2>
+          <p className="text-lg text-gray-600">
+            The prototype currently includes three character styles, four room
+            types, starter decks, enemy intents, turn-based battles, floor
+            progression, and basic rewards. The complete run-building and Greed
+            loops are the next development focus.
+          </p>
         </div>
-      </div>
+      </section>
 
-      {/* Footer */}
       <footer className="border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center text-gray-600">
-            <p>
-              © {new Date().getFullYear()} Crypt of Greed. All rights reserved.
-            </p>
-          </div>
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <p className="text-center text-gray-600">
+            © {new Date().getFullYear()} Crypt of Greed. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
