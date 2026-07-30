@@ -1,0 +1,64 @@
+name: Feature request
+description: Propose a focused gameplay, UI, or engineering improvement
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check the implementation roadmap before proposing large features. The current priority is proving the Greed bank-or-risk loop with simple, maintainable systems.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the player or developer problem without prescribing a large implementation.
+      placeholder: Players cannot currently...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed improvement
+      description: Explain the smallest coherent change that solves the problem.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Core gameplay
+        - Greed and run progression
+        - Combat and cards
+        - Rooms and rewards
+        - UI, UX, or accessibility
+        - Accounts and persistence
+        - Documentation
+        - Repository maintenance
+        - Platform readiness
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected impact
+      description: Explain how this improves player decisions, reliability, maintainability, accessibility, or release readiness.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Simpler alternatives considered
+      description: List smaller options or explain why the current system cannot be reused.
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Product boundaries
+      options:
+        - label: This proposal does not add wallet, NFT, cryptocurrency, or custodial-key functionality.
+          required: true
+        - label: I reviewed the current roadmap and existing issues.
+          required: true
+        - label: I am willing to keep the implementation simple and focused.
+          required: true
