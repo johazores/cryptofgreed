@@ -13,9 +13,9 @@ model User {
   password               String
   role                   String      @default("USER")
   name                   String?
-  walletAddress          String?     @unique
-  custodialWalletAddress String?     @unique // Legacy only; new accounts do not receive custodial wallets
-  encryptedPrivateKey    String?     // Legacy only; no new private keys are stored
+  walletAddress          String?
+  custodialWalletAddress String?             // Legacy only; new accounts do not receive custodial wallets
+  encryptedPrivateKey    String?             // Legacy only; no new private keys are stored
   crystals               Int         @default(0)
   bankItems              BankItem[]
   characters             Character[]
