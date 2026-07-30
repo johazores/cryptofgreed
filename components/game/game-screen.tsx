@@ -21,28 +21,23 @@ export default function GameScreen({ onExit }: GameScreenProps) {
     if (!character) return;
 
     try {
-      // Update the floor first
       const nextFloor = (character.floor || 1) + 1;
-      await updateCharacter(character.id, {
-        floor: nextFloor,
-      });
+      await updateCharacter(character.id, { floor: nextFloor });
 
-      // Special case: force rest site every 5 floors
       if (nextFloor % 5 === 0) {
         setCurrentRoom(RoomType.REST);
         return;
       }
 
-      // Generate 2 random unique room options
       const possibleRooms = [
         RoomType.BATTLE,
         RoomType.REST,
         RoomType.SHOP,
         RoomType.EVENT,
       ];
-      const numberOfChoices = 2;
-      const shuffledRooms = [...possibleRooms].sort(() => Math.random() - 0.5);
-      const selectedRooms = shuffledRooms.slice(0, numberOfChoices);
+      const selectedRooms = [...possibleRooms]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2);
 
       setAvailableRooms(selectedRooms);
       setShowRoomSelection(true);
@@ -61,7 +56,7 @@ export default function GameScreen({ onExit }: GameScreenProps) {
   const renderRoom = () => {
     switch (currentRoom) {
       case RoomType.BATTLE:
-        return <Combat onExit={onExit} onCombatEnd={handleContinue} />;
+        return <Combat onExit={onExit} />;
       case RoomType.REST:
         return <RestSite onContinue={handleContinue} />;
       case RoomType.SHOP:
