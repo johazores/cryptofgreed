@@ -1,186 +1,180 @@
 "use client";
-import { signIn } from "next-auth/react";
+
+import { useEffect, useState, type FormEvent } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { Lock, Mail, ShieldCheck, Skull } from "lucide-react";
 import Button from "@/components/ui/button";
 import TextField from "@/components/textfield";
-import Loader from "@/components/ui/loader";
-import { Skull } from "lucide-react";
-import { Mail, Lock } from "lucide-react";
-
-type AuthMode = "login" | "register";
 
 interface AuthProps {
   onSuccess?: () => void;
 }
+
+type AuthMode = "login" | "register";
 
 export default function Auth({ onSuccess }: AuthProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [mode, setMode] = useState<AuthMode>("login");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!session) return;
+    onSuccess?.();
+  }, [session, onSuccess]);
 
-  // Handle successful login
-  useEffect(() => {
-    if (session) {
-      onSuccess?.();
-      router.push("/dashboard");
-    }
-  }, [session, router, onSuccess]);
-
-  if (!mounted || status === "loading" || session) {
-    return <Loader fullScreen className="h-8 w-8" />;
-  }
-
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError(null);
-    setLoading(true);
+    setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") || "").trim().toLowerCase();
+    const password = String(formData.get("password") || "");
 
     try {
       if (mode === "register") {
-        const res = await fetch("/api/auth/register", {
+        const registration = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
 
-        if (!res.ok) {
-          const error = await res.text();
-          throw new Error(error || "Failed to register");
+        if (!registration.ok) {
+          throw new Error((await registration.text()) || "Failed to create account");
         }
-
-        await signIn("credentials", {
-          email,
-          password,
-          redirect: false,
-        });
-
-        router.push("/dashboard");
-      } else {
-        const response = await signIn("credentials", {
-          email,
-          password,
-          redirect: false,
-        });
-
-        if (response?.error) {
-          throw new Error("Invalid credentials");
-        }
-
-        router.push("/dashboard");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (!result || result.error) {
+        throw new Error(
+          mode === "login"
+            ? "The email or password is incorrect"
+            : "Account created, but automatic sign-in failed"
+        );
+      }
+
+      onSuccess?.();
+      router.push("/dashboard");
+      router.refresh();
+    } catch (submissionError) {
+      setError(
+        submissionError instanceof Error
+          ? submissionError.message
+          : "Authentication failed"
+      );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }
 
-  return (
-    <div className="flex items-center justify-center p-2">
-      <div className="w-full max-w-md">
-        <div className="mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="relative w-16 h-16">
-              <Skull className="w-full h-full object-contain text-primary animate-float" />
-            </div>
-          </div>
-          <h2 className="text-4xl font-medievalsharp font-bold text-center">
-            {mode === "login"
-              ? "Welcome Back, Adventurer"
-              : "Create New Account"}
-          </h2>
-          <p className="mt-2 text-gray-600 text-center">
-            {mode === "login"
-              ? "Return to your quest in the Crypt of Greed"
-              : "Begin your journey into the depths"}
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4 text-red-600 text-sm">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <TextField
-              id="email"
-              name="email"
-              type="email"
-              label="Email address"
-              placeholder="Enter your email"
-              required
-              fullWidth
-              startIcon={<Mail className="w-5 h-5" />}
-            />
-
-            <TextField
-              id="password"
-              name="password"
-              type="password"
-              label="Password"
-              placeholder="Enter your password"
-              required
-              fullWidth
-              startIcon={<Lock className="w-5 h-5" />}
-              minLength={6}
-            />
-          </div>
-
-          <div>
-            <Button
-              type="submit"
-              isLoading={loading}
-              fullWidth
-              size="lg"
-              className="font-medievalsharp text-lg"
-            >
-              {mode === "login" ? "Enter the Crypt" : "Begin Your Journey"}
-            </Button>
-          </div>
-
-          <div className="mt-4 text-center">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  {mode === "login"
-                    ? "New to Crypt of Greed?"
-                    : "Already have an account?"}
-                </span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setMode(mode === "login" ? "register" : "login")}
-              className="mt-4 text-primary hover:text-primary-dark transition-colors"
-            >
-              {mode === "login"
-                ? "Create your account"
-                : "Sign in to your account"}
-            </Button>
-          </div>
-        </form>
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-64 items-center justify-center p-8 text-sm font-semibold text-slate-500">
+        Checking your session...
       </div>
+    );
+  }
+
+  if (session) return null;
+
+  return (
+    <div className="overflow-hidden rounded-2xl bg-white">
+      <div className="bg-[radial-gradient(circle_at_top,#38232b_0%,#17151b_75%)] p-6 text-center text-white sm:p-8">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-amber-200">
+          <Skull className="h-7 w-7" aria-hidden="true" />
+        </div>
+        <p className="mt-4 text-xs font-bold tracking-[0.2em] text-amber-200/70 uppercase">
+          {mode === "login" ? "Continue your run" : "Create a local account"}
+        </p>
+        <h2 className="mt-1 font-medievalsharp text-3xl sm:text-4xl">
+          {mode === "login" ? "Welcome back" : "Enter the crypt"}
+        </h2>
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-300">
+          {mode === "login"
+            ? "Sign in to access your characters and progression."
+            : "Registration creates only a game account—no wallet or private key."}
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5 p-5 sm:p-7">
+        {error && (
+          <div
+            role="alert"
+            aria-live="polite"
+            className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800"
+          >
+            {error}
+          </div>
+        )}
+
+        <TextField
+          id="auth-email"
+          name="email"
+          type="email"
+          label="Email address"
+          placeholder="you@example.com"
+          autoComplete="email"
+          required
+          fullWidth
+          startIcon={<Mail className="h-5 w-5" />}
+        />
+        <TextField
+          id="auth-password"
+          name="password"
+          type="password"
+          label="Password"
+          placeholder="At least 6 characters"
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          minLength={6}
+          required
+          fullWidth
+          helperText={mode === "register" ? "Use at least 6 characters." : undefined}
+          startIcon={<Lock className="h-5 w-5" />}
+        />
+
+        {mode === "register" && (
+          <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-5 text-emerald-900">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            New accounts do not create custodial wallets or store blockchain keys.
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          fullWidth
+          size="lg"
+          isLoading={isLoading}
+          loadingLabel={mode === "login" ? "Signing in..." : "Creating account..."}
+          className="font-medievalsharp"
+        >
+          {mode === "login" ? "Enter the crypt" : "Create account"}
+        </Button>
+
+        <div className="border-t border-slate-200 pt-4 text-center">
+          <p className="text-sm text-slate-500">
+            {mode === "login" ? "New to Crypt of Greed?" : "Already have an account?"}
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            className="mt-1 text-primary"
+            onClick={() => {
+              setMode((current) => (current === "login" ? "register" : "login"));
+              setError(null);
+            }}
+          >
+            {mode === "login" ? "Create an account" : "Sign in instead"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
