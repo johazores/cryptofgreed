@@ -1,0 +1,72 @@
+name: Bug report
+description: Report a reproducible defect in the current prototype
+title: "fix: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include secrets, private data, or exploitable vulnerability details. Follow SECURITY.md for sensitive reports.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the current and expected behavior.
+      placeholder: The current behavior is... I expected...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest reliable sequence that reproduces the defect.
+      placeholder: |
+        1. Sign in as...
+        2. Open...
+        3. Select...
+        4. Observe...
+    validations:
+      required: true
+  - type: input
+    id: area
+    attributes:
+      label: Affected route or feature
+      placeholder: /dashboard/game/[characterId] or merchant room
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      options:
+        - Every time
+        - Often
+        - Sometimes
+        - Once
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include browser, operating system, viewport or device, Node version, and relevant local services.
+      placeholder: Chrome 150, Windows 11, 1440x900, Node 22
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Remove credentials, personal data, database values, and private identifiers.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Reporter checklist
+      options:
+        - label: I searched existing issues for the same defect.
+          required: true
+        - label: I removed secrets and personal data from this report.
+          required: true
+        - label: This is not a sensitive security vulnerability.
+          required: true
