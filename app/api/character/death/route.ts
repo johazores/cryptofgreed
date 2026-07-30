@@ -1,50 +1,52 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { WalletService } from "@/lib/wallet";
-import { decrypt } from "@/lib/encryption";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const { characterId } = await req.json();
+    if (!characterId || typeof characterId !== "string") {
+      return NextResponse.json(
+        { message: "Character ID is required" },
+        { status: 400 }
+      );
+    }
 
-    await prisma.$transaction(async (tx) => {
-      const character = await tx.character.findUnique({
-        where: { id: characterId },
-        include: { equipment: true },
-      });
-
-      if (!character) throw new Error("Character not found");
-
-      const user = await tx.user.findUnique({
-        where: { id: character.userId },
-        select: { encryptedPrivateKey: true },
-      });
-
-      if (user?.encryptedPrivateKey) {
-        const walletService = new WalletService();
-
-        // Burn all equipped NFTs
-        for (const item of character.equipment) {
-          await walletService.burnNFT(item.contractAddress, item.nftId);
-        }
-      }
-
-      // Clear character equipment
-      await tx.equipment.deleteMany({
-        where: { characterId: character.id },
-      });
+    const character = await prisma.character.findUnique({
+      where: { id: characterId },
     });
 
-    return NextResponse.json({ success: true });
+    if (!character || character.userId !== session.user.id) {
+      return NextResponse.json(
+        { message: "Character not found" },
+        { status: 404 }
+      );
+    }
+
+    const deadCharacter = await prisma.character.update({
+      where: { id: characterId },
+      data: {
+        isDead: true,
+        currentHealth: 0,
+      },
+      include: {
+        equipment: true,
+        powers: true,
+      },
+    });
+
+    return NextResponse.json(deadCharacter);
   } catch (error) {
     console.error("Error handling character death:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
