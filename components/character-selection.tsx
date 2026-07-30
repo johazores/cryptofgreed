@@ -1,32 +1,31 @@
-import React from "react";
-import { Character } from "@/types/character";
+import type { Character } from "@/types/character";
+import { REVIVE_COST } from "@/lib/game/revival";
 import { useRouter } from "next/navigation";
-
 import { LuSwords } from "react-icons/lu";
 import { GiCrossbow } from "react-icons/gi";
 import { FaWandMagicSparkles } from "react-icons/fa6";
 
 interface CharacterSelectionProps {
   character: Character;
-  onRevive: (characterId: string) => void;
+  onRevive: (characterId: string) => void | Promise<void>;
   crystals: number;
 }
 
-const CharacterSelection = ({
+export default function CharacterSelection({
   character,
   onRevive,
   crystals,
-}: CharacterSelectionProps) => {
+}: CharacterSelectionProps) {
   const router = useRouter();
 
   const getClassIcon = (characterClass: string) => {
     switch (characterClass) {
       case "MELEE":
-        return <LuSwords className="w-6 h-6" />;
+        return <LuSwords className="h-6 w-6" />;
       case "RANGE":
-        return <GiCrossbow className="w-6 h-6" />;
+        return <GiCrossbow className="h-6 w-6" />;
       case "MAGIC":
-        return <FaWandMagicSparkles className="w-6 h-6" />;
+        return <FaWandMagicSparkles className="h-6 w-6" />;
       default:
         return null;
     }
@@ -34,41 +33,33 @@ const CharacterSelection = ({
 
   const healthPercentage =
     (character.currentHealth / character.maxHealth) * 100;
-  const expToNextLevel = 100; // Assuming 100 exp per level
-  const currentLevelExp = character.experience % expToNextLevel;
-  const expPercentage = (currentLevelExp / expToNextLevel) * 100;
+  const currentLevelExp = character.experience % 100;
+  const expPercentage = currentLevelExp;
+  const canRevive = crystals >= REVIVE_COST;
 
   return (
     <div
-      className={`
-        relative bg-white rounded-xl shadow-lg overflow-hidden
-        ${
-          character.isDead
-            ? "border-2 border-red-500"
-            : "border border-gray-200"
-        }
-        transform transition-all duration-300 hover:scale-102 hover:shadow-xl
-      `}
+      className={`relative overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-300 hover:shadow-xl ${
+        character.isDead
+          ? "border-2 border-red-500"
+          : "border border-gray-200"
+      }`}
     >
       {character.isDead && (
-        <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs py-1 text-center">
+        <div className="absolute top-0 right-0 left-0 bg-red-500 py-1 text-center text-xs text-white">
           FALLEN
         </div>
       )}
 
       <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between my-4">
+        <div className="my-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className={`
-              p-3 rounded-lg
-              ${
+              className={`rounded-lg p-3 ${
                 character.isDead
                   ? "bg-red-100 text-red-500"
                   : "bg-primary/10 text-primary"
-              }
-            `}
+              }`}
             >
               {getClassIcon(character.class)}
             </div>
@@ -81,100 +72,74 @@ const CharacterSelection = ({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-yellow-600">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </span>
-            <span className="text-sm font-medium">{character.gold}</span>
-          </div>
+          <span className="text-sm font-medium text-yellow-600">
+            {character.gold} Gold
+          </span>
         </div>
 
-        {/* Updated Stats Section */}
-        <div className="space-y-6 mb-6">
-          {/* Health Bar */}
+        <div className="mb-6 space-y-6">
           <div>
-            <div className="flex justify-between items-center mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-medium text-gray-700">Health</span>
               <span className="text-sm text-gray-600">
                 {character.currentHealth}/{character.maxHealth}
               </span>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-2 overflow-hidden rounded-full bg-gray-200">
               <div
                 className={`h-full rounded-full transition-all duration-300 ${
                   healthPercentage > 60
                     ? "bg-green-500"
                     : healthPercentage > 30
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
                 }`}
                 style={{ width: `${healthPercentage}%` }}
               />
             </div>
           </div>
 
-          {/* Experience Bar */}
           <div>
-            <div className="flex justify-between items-center mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-medium text-gray-700">
                 Experience
               </span>
               <span className="text-sm text-gray-600">
-                {currentLevelExp}/{expToNextLevel}
+                {currentLevelExp}/100
               </span>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-2 overflow-hidden rounded-full bg-gray-200">
               <div
-                className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                className="h-full rounded-full bg-blue-500 transition-all duration-300"
                 style={{ width: `${expPercentage}%` }}
               />
             </div>
           </div>
 
-          {/* Kills Counter */}
-          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+          <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
             <span className="text-sm text-gray-700">Monsters Slain</span>
-            <span className="text-lg font-medievalsharp text-gray-900">
+            <span className="font-medievalsharp text-lg text-gray-900">
               {character.monstersSlain}
             </span>
           </div>
         </div>
 
-        {/* Action Button */}
         {character.isDead ? (
           <button
             onClick={() => onRevive(character.id)}
-            disabled={crystals < 100}
-            className={`
-              w-full py-3 px-6 rounded-lg font-medievalsharp
-              flex items-center justify-center gap-2
-              ${
-                crystals < 100
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-red-500 hover:bg-red-600"
-              } text-white transition-colors duration-200
-            `}
+            disabled={!canRevive}
+            className={`flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medievalsharp text-white transition-colors duration-200 ${
+              canRevive
+                ? "bg-red-500 hover:bg-red-600"
+                : "cursor-not-allowed bg-gray-300"
+            }`}
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Revive (100 Crystals)
+            Revive ({REVIVE_COST} Crystals)
           </button>
         ) : (
           <button
             onClick={() => router.push(`/dashboard/game/${character.id}`)}
-            className="w-full py-3 px-6 rounded-lg font-medievalsharp bg-primary hover:bg-primary-dark text-white transition-colors duration-200"
+            className="bg-primary hover:bg-primary-dark w-full rounded-lg px-6 py-3 font-medievalsharp text-white transition-colors duration-200"
           >
             Enter the Crypt
           </button>
@@ -182,6 +147,4 @@ const CharacterSelection = ({
       </div>
     </div>
   );
-};
-
-export default CharacterSelection;
+}
