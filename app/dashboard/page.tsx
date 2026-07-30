@@ -31,7 +31,9 @@ export default function DashboardPage() {
       setCrystals(crystalData.crystals);
     } catch (error) {
       console.error("Failed to load dashboard:", error);
-      setLoadError("Your characters could not be loaded. Check the database connection and try again.");
+      setLoadError(
+        "Your characters could not be loaded. Check the database connection and try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -47,12 +49,18 @@ export default function DashboardPage() {
       return;
     }
 
-    const result = await reviveCharacter(characterId);
-    setCrystals(result.crystalsRemaining);
+    try {
+      const result = await reviveCharacter(characterId);
+      setCrystals(result.crystalsRemaining);
+    } catch {
+      // The character context already displays the server error.
+    }
   };
 
   const dashboardStats = useMemo(() => {
-    const livingCharacters = characters.filter((character) => !character.isDead).length;
+    const livingCharacters = characters.filter(
+      (character) => !character.isDead
+    ).length;
     const deepestFloor = characters.reduce(
       (deepest, character) => Math.max(deepest, character.floor),
       0
@@ -75,10 +83,14 @@ export default function DashboardPage() {
                 Delver roster
               </p>
               <h1 className="mt-2 font-medievalsharp text-4xl sm:text-5xl">
-                Welcome back, {session?.user?.name || session?.user?.email?.split("@")[0] || "adventurer"}
+                Welcome back,{" "}
+                {session?.user?.name ||
+                  session?.user?.email?.split("@")[0] ||
+                  "adventurer"}
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-                Continue an expedition, recover a fallen delver, or prepare a new path into the crypt.
+                Continue an expedition, recover a fallen delver, or prepare a new
+                path into the crypt.
               </p>
             </div>
             {characters.length > 0 && (
@@ -95,17 +107,33 @@ export default function DashboardPage() {
           </div>
 
           <div className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <HeaderStat icon={Swords} label="Characters" value={characters.length} />
-            <HeaderStat icon={Shield} label="Ready" value={dashboardStats.livingCharacters} />
-            <HeaderStat icon={Skull} label="Deepest floor" value={dashboardStats.deepestFloor || "—"} />
+            <HeaderStat
+              icon={Swords}
+              label="Characters"
+              value={characters.length}
+            />
+            <HeaderStat
+              icon={Shield}
+              label="Ready"
+              value={dashboardStats.livingCharacters}
+            />
+            <HeaderStat
+              icon={Skull}
+              label="Deepest floor"
+              value={dashboardStats.deepestFloor || "—"}
+            />
             <HeaderStat icon={Gem} label="Crystals" value={crystals} />
           </div>
         </header>
 
         {loadError ? (
           <section className="mt-6 rounded-2xl border border-red-200 bg-white p-6 text-center shadow-xl">
-            <h2 className="font-medievalsharp text-3xl text-red-800">Dashboard unavailable</h2>
-            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{loadError}</p>
+            <h2 className="font-medievalsharp text-3xl text-red-800">
+              Dashboard unavailable
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
+              {loadError}
+            </p>
             <Button className="mt-5" onClick={loadDashboard}>
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Retry
@@ -164,7 +192,9 @@ function HeaderStat({
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
       <Icon className="h-5 w-5 text-amber-200" aria-hidden="true" />
-      <p className="mt-2 text-[9px] font-bold tracking-[0.18em] text-slate-400 uppercase">{label}</p>
+      <p className="mt-2 text-[9px] font-bold tracking-[0.18em] text-slate-400 uppercase">
+        {label}
+      </p>
       <p className="mt-1 text-xl font-bold tabular-nums text-white">{value}</p>
     </div>
   );
@@ -173,7 +203,10 @@ function HeaderStat({
 function DashboardSkeleton() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-950 px-3 py-8 sm:px-6">
-      <div className="mx-auto max-w-7xl animate-pulse space-y-6" aria-label="Loading dashboard">
+      <div
+        className="mx-auto max-w-7xl animate-pulse space-y-6"
+        aria-label="Loading dashboard"
+      >
         <div className="h-64 rounded-3xl bg-white/10" />
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((item) => (
