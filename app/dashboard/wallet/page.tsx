@@ -1,27 +1,16 @@
-"use client";
-import NFTManager from "@/components/nft/nft-manager";
-import WalletManager from "@/components/wallet/wallet-manager";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-
 export default function WalletPage() {
-  const { data: session, status } = useSession();
-
-  if (status === "loading") {
-    return <div>Loading...</div>;
-  }
-
-  if (!session) {
-    redirect("/");
-  }
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-medievalsharp mb-8">Wallet & NFTs</h1>
-
-      <div className="grid grid-cols-1 gap-8">
-        <WalletManager />
-        <NFTManager />
+    <div className="container mx-auto max-w-2xl px-4 py-12">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-8">
+        <h1 className="mb-3 font-medievalsharp text-3xl text-gray-900">
+          Wallet Features Disabled
+        </h1>
+        <p className="text-gray-700">
+          Custodial wallets and NFT operations are no longer part of the active
+          game path. Existing blockchain prototype data is retained only for
+          migration and review while Crypt of Greed moves toward a premium,
+          offline-first release.
+        </p>
       </div>
     </div>
   );
