@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Coins, Gem, Skull, Sparkles, Trophy } from "lucide-react";
 import Button from "@/components/ui/button";
-import Modal from "../modal";
+import Modal from "@/components/ui/modal";
 
 interface GameModalProps {
   isOpen: boolean;
