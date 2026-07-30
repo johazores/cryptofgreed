@@ -72,7 +72,7 @@ npm run typecheck
 npm run build
 ```
 
-The game tests cover combat turns, rewards, revival rules, seeded shuffling, floor progression, room choices, shop inventory, and equipment combat bonuses.
+The current game suite covers combat turns, rewards, revival, seeded shuffling, floor progression, room choices, shop inventory, equipment combat bonuses, and character-creation rules.
 
 ## Verified Core Rules
 
@@ -88,8 +88,12 @@ The game tests cover combat turns, rewards, revival rules, seeded shuffling, flo
 - one equipment item is stored per slot
 - weapon and defensive equipment improve relevant cards
 - revival cost and ownership are enforced by the server
+- character names and fighting styles are normalized and validated server-side
+- starter characters use normal game equipment without NFT references
 
 ## UI and UX Improvements
+
+### Gameplay rooms
 
 - responsive dark-fantasy game shell across combat, rest, shop, and event rooms
 - one centralized room-selection flow instead of duplicate combat navigation
@@ -99,6 +103,20 @@ The game tests cover combat turns, rewards, revival rules, seeded shuffling, flo
 - dialogs support Escape behavior, focus, ARIA labels, and safer non-dismissible decisions
 - event choices show their cost and outcome before commitment
 - mobile combat no longer relies on a large fixed overlay covering the battlefield
+
+### Dashboard and onboarding
+
+- responsive dashboard with roster totals, ready-character count, deepest floor, and crystal balance
+- skeleton loading and a visible retry state instead of a blank full-screen spinner
+- multiple characters can be created without reloading the application
+- semantic fighting-style selection with a recommended first class and readable strengths
+- richer character cards show floor, level, health, experience, gold, kills, and equipment count
+- revive and creation actions expose their own loading and insufficient-resource states
+- responsive desktop and mobile navigation with active-page indicators
+- simplified account menu with only working dashboard, settings, and sign-out actions
+- authentication explains that registration creates no wallet or private key
+- profile changes update the active authentication session without browser-storage synchronization
+- text inputs expose helper and error relationships to assistive technology
 
 ## Known Limitations
 

@@ -1,135 +1,152 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { redirect, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { ArrowLeft, Mail, Save, User } from "lucide-react";
 import { toast } from "sonner";
 import Button from "@/components/ui/button";
 import TextField from "@/components/textfield";
-import { User, Mail, ArrowLeft } from "lucide-react";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { data: session, status, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: ""
-  });
+  const [formData, setFormData] = useState({ name: "", email: "" });
 
-  // Update form data when session changes
   useEffect(() => {
-    if (session?.user) {
-      setFormData({
-        name: session.user.name || "",
-        email: session.user.email || ""
-      });
-    }
-  }, [session?.user?.name, session?.user?.email]); // Watch specific properties
+    if (!session?.user) return;
+    setFormData({
+      name: session.user.name || "",
+      email: session.user.email || "",
+    });
+  }, [session?.user]);
 
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-slate-950 text-sm font-semibold text-slate-300">
+        Loading settings...
+      </div>
+    );
   }
 
-  if (!session) {
-    redirect("/");
-  }
+  if (!session) redirect("/");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setIsLoading(true);
 
     try {
       const response = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+        }),
       });
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update profile");
+        throw new Error(data?.message || "Failed to update profile");
       }
 
-      const data = await response.json();
-
-      // Save email to localStorage
-      localStorage.setItem('userEmail', formData.email);
-
-      // Update the session with new data
       await update({
-        ...session,
         user: {
-          ...session?.user,
-          name: formData.name,
-          email: formData.email,
-        }
+          ...session.user,
+          name: data.user.name,
+          email: data.user.email,
+        },
       });
-
-      // Dispatch storage event to notify other components
-      window.dispatchEvent(new Event('storage'));
-
-      // Force a router refresh to update all components
       router.refresh();
-
-      toast.success(data.message || "Profile updated successfully");
+      toast.success("Profile updated");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update profile");
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 rounded-full"
-        >
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <h1 className="text-3xl font-medievalsharp font-bold">Settings</h1>
-      </div>
+    <div className="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_top,#2d2027_0%,#111217_38%,#f4f1ea_38%)] px-3 py-7 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-3xl">
+        <header className="rounded-3xl border border-white/10 bg-black/30 p-5 text-white shadow-2xl backdrop-blur sm:p-7">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="text-slate-300 hover:bg-white/10 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Back
+          </Button>
+          <p className="mt-5 text-xs font-bold tracking-[0.2em] text-amber-200/70 uppercase">
+            Account
+          </p>
+          <h1 className="mt-1 font-medievalsharp text-4xl sm:text-5xl">Settings</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            Update the name and email shown across your account.
+          </p>
+        </header>
 
-      <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
-        <h2 className="text-xl font-semibold mb-4">Profile Settings</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-
-          <TextField
-            id="email"
-            name="email"
-            type="email"
-            label="Email Address"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Enter your email"
-            startIcon={<Mail className="w-5 w-5" />}
-            fullWidth
-          />
-
-          <div className="pt-4">
-            <Button
-              type="submit"
-              isLoading={isLoading}
-              className="w-full md:w-auto"
-            >
-              Save Changes
-            </Button>
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
+          <div className="flex items-start gap-3">
+            <div className="rounded-xl bg-primary/10 p-3 text-primary">
+              <User className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="font-medievalsharp text-3xl text-slate-950">Profile</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                These changes affect sign-in and account display information.
+              </p>
+            </div>
           </div>
-        </form>
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <TextField
+              id="profile-name"
+              name="name"
+              label="Display name"
+              value={formData.name}
+              onChange={(event) =>
+                setFormData((current) => ({ ...current, name: event.target.value }))
+              }
+              placeholder="Adventurer"
+              maxLength={50}
+              fullWidth
+              helperText="Optional. This name appears on your dashboard."
+              startIcon={<User className="h-5 w-5" />}
+            />
+            <TextField
+              id="profile-email"
+              name="email"
+              type="email"
+              label="Email address"
+              value={formData.email}
+              onChange={(event) =>
+                setFormData((current) => ({ ...current, email: event.target.value }))
+              }
+              autoComplete="email"
+              required
+              fullWidth
+              startIcon={<Mail className="h-5 w-5" />}
+            />
+
+            <div className="flex justify-end border-t border-slate-200 pt-5">
+              <Button
+                type="submit"
+                size="lg"
+                isLoading={isLoading}
+                loadingLabel="Saving profile..."
+                className="w-full sm:w-auto"
+              >
+                <Save className="h-4 w-4" aria-hidden="true" />
+                Save changes
+              </Button>
+            </div>
+          </form>
+        </section>
       </div>
     </div>
   );
-} 
+}
