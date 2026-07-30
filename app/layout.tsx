@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, MedievalSharp } from "next/font/google";
 import { NextAuthProvider } from "./providers";
 import { CharacterProvider } from "@/context/character-context";
-import Navbar from "@/components/navbar";
+import Navbar from "@/components/layout/navbar";
 import "./globals.css";
 
 const geistSans = Geist({
