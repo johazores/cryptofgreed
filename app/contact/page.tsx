@@ -2,7 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { FaDiscord, FaTwitter } from "react-icons/fa";
 import { Mail, MessageSquare, User } from "lucide-react";
-import TextArea from "@/components/textarea";
+import TextArea from "@/components/ui/text-area";
 import TextField from "@/components/ui/text-field";
 
 export const metadata: Metadata = {
