@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, MedievalSharp } from "next/font/google";
 import { NextAuthProvider } from "./providers";
-import { WalletProvider } from "@/context/wallet-connection";
 import { CharacterProvider } from "@/context/character-context";
 import Navbar from "@/components/navbar";
 import "./globals.css";
@@ -20,70 +19,54 @@ const medievalSharp = MedievalSharp({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
+
+const title = "Crypt of Greed - Deckbuilding Roguelite Prototype";
+const description =
+  "A turn-based deckbuilding roguelite prototype about deciding when to bank your treasure and when to risk carrying it deeper into the crypt.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://cryptofgreed.com"),
   title: {
-    default: "Crypt of Greed - NFT Roguelike Card Game",
+    default: title,
     template: "%s | Crypt of Greed",
   },
-  description:
-    "Embark on an epic roguelike card adventure where every decision shapes your destiny. Battle monsters, collect NFT treasures, and forge your legacy on Core DAO blockchain.",
+  description,
   keywords: [
-    "NFT game",
-    "blockchain game",
-    "roguelike",
-    "card game",
-    "Core DAO",
-    "play to earn",
-    "crypto gaming",
-    "web3 game",
+    "deckbuilding roguelite",
+    "turn-based card game",
+    "indie game",
+    "dark fantasy",
+    "strategy game",
   ],
   authors: [{ name: "Crypt of Greed Team" }],
   creator: "Crypt of Greed",
   publisher: "Crypt of Greed",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://cryptofgreed.com",
-    title: "Crypt of Greed - NFT Roguelike Card Game",
-    description:
-      "Battle monsters, collect NFT treasures, and forge your legacy in this epic roguelike card game on Core DAO blockchain.",
+    title,
+    description,
     siteName: "Crypt of Greed",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Crypt of Greed - NFT Roguelike Card Game",
+        alt: "Crypt of Greed deckbuilding roguelite prototype",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Crypt of Greed - NFT Roguelike Card Game",
-    description:
-      "Battle monsters, collect NFT treasures, and forge your legacy in this epic roguelike card game on Core DAO blockchain.",
-    creator: "@cryptofgreed",
+    title,
+    description,
     images: ["/twitter-image.jpg"],
   },
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
   },
   icons: {
     icon: [
@@ -92,18 +75,8 @@ export const metadata: Metadata = {
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
     apple: [{ url: "/apple-touch-icon.png" }],
-    other: [
-      {
-        rel: "apple-touch-icon-precomposed",
-        url: "/apple-touch-icon-precomposed.png",
-      },
-    ],
   },
   manifest: "/site.webmanifest",
-  verification: {
-    google: "your-google-site-verification-code",
-    yandex: "your-yandex-verification-code",
-  },
 };
 
 export default function RootLayout({
@@ -118,12 +91,10 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <NextAuthProvider>
-          <WalletProvider>
-            <CharacterProvider>
-              <Navbar />
-              <main className="mt-16">{children}</main>
-            </CharacterProvider>
-          </WalletProvider>
+          <CharacterProvider>
+            <Navbar />
+            <main className="mt-16">{children}</main>
+          </CharacterProvider>
         </NextAuthProvider>
       </body>
     </html>
