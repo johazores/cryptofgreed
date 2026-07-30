@@ -5,7 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ShieldCheck, Skull } from "lucide-react";
 import Button from "@/components/ui/button";
-import TextField from "@/components/textfield";
+import TextField from "@/components/ui/text-field";
 
 interface AuthProps {
   onSuccess?: () => void;
