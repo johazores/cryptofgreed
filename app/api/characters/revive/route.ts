@@ -2,62 +2,101 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
+import {
+  getRevivalBlockReason,
+  REVIVE_COST,
+} from "@/lib/game/revival";
 
-const REVIVE_COST = 100; // Crystal cost to revive
+class ReviveRouteError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
+}
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const { characterId } = await req.json();
+    if (!characterId || typeof characterId !== "string") {
+      return NextResponse.json(
+        { message: "Character ID is required" },
+        { status: 400 }
+      );
+    }
 
-    // Start a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Get user and verify crystal balance
-      const user = await tx.user.findUnique({
-        where: { id: session.user.id },
-        select: { crystals: true },
-      });
-
-      if (!user || user.crystals < REVIVE_COST) {
-        throw new Error("Insufficient crystals");
-      }
-
-      // Get character and verify ownership
       const character = await tx.character.findUnique({
         where: { id: characterId },
       });
 
       if (!character || character.userId !== session.user.id) {
-        throw new Error("Character not found or unauthorized");
+        throw new ReviveRouteError("Character not found", 404);
       }
 
-      // Deduct crystals from user
-      await tx.user.update({
+      const user = await tx.user.findUnique({
         where: { id: session.user.id },
-        data: { crystals: user.crystals - REVIVE_COST },
+        select: { crystals: true },
       });
 
-      // Revive character
+      if (!user) {
+        throw new ReviveRouteError("User not found", 404);
+      }
+
+      const blockReason = getRevivalBlockReason(
+        character.isDead,
+        user.crystals
+      );
+
+      if (blockReason === "CHARACTER_ALREADY_ALIVE") {
+        throw new ReviveRouteError("Character is already alive", 409);
+      }
+
+      if (blockReason === "INSUFFICIENT_CRYSTALS") {
+        throw new ReviveRouteError("Insufficient crystals", 400);
+      }
+
+      const crystalsRemaining = user.crystals - REVIVE_COST;
+
+      await tx.user.update({
+        where: { id: session.user.id },
+        data: { crystals: crystalsRemaining },
+      });
+
       const revivedCharacter = await tx.character.update({
         where: { id: characterId },
         data: {
           isDead: false,
           currentHealth: character.maxHealth,
         },
+        include: {
+          equipment: true,
+          powers: true,
+        },
       });
 
-      return revivedCharacter;
+      return {
+        character: revivedCharacter,
+        crystalsRemaining,
+      };
     });
 
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error reviving character:", error);
-    return new NextResponse(
-      error instanceof Error ? error.message : "Internal Server Error",
+
+    if (error instanceof ReviveRouteError) {
+      return NextResponse.json(
+        { message: error.message },
+        { status: error.status }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
