@@ -6,8 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
-import Auth from "@/components/auth";
-import Modal from "@/components/modal";
+import Auth from "@/components/auth/auth-form";
+import Modal from "@/components/ui/modal";
 import Button from "@/components/ui/button";
 import UserAvatar from "./user-avatar";
 
