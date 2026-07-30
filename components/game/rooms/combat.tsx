@@ -1,9 +1,12 @@
-import { Character } from "@/types/character";
-import { GameState, GameManager } from "@/lib/game/game-state";
-import { Enemy, EnemyManager } from "@/lib/game/enemy";
-import { useState, useEffect } from "react";
+import type { Character } from "@/types/character";
+import { GameManager, type GameState } from "@/lib/game/game-state";
+import { EnemyManager, type Enemy } from "@/lib/game/enemy";
+import { useEffect, useState } from "react";
 import { CombatManager } from "@/lib/game/combat-manager";
+import { calculateCombatRewards } from "@/lib/game/rewards";
+import { RoomType } from "@/lib/game/room-manager";
 import GameModal from "../end-battle-modal";
+import RoomSelectionModal from "../room-selection-modal";
 import CharacterStats from "../character-stats";
 import { useCharacter } from "@/context/character-context";
 import { toast } from "sonner";
@@ -12,34 +15,39 @@ import Card from "../card";
 import { Skull } from "lucide-react";
 
 interface CombatProps {
-  onCombatEnd: () => void;
   onExit: () => void;
 }
 
-enum RoomType {
-  BATTLE = "BATTLE",
-  REST = "REST",
-  SHOP = "SHOP",
-  EVENT = "EVENT",
+function createGameState(character: Character, floor = character.floor) {
+  return new GameManager({
+    ...character,
+    floor,
+    equipment: character.equipment || [],
+    powers: character.powers || [],
+    block: 0,
+    deck: [],
+    hand: [],
+    discardPile: [],
+  }).getState();
 }
 
-export default function Combat({ onCombatEnd, onExit }: CombatProps) {
-  const { character, updateCharacter, markCharacterAsDead, reviveCharacter } = useCharacter();
+export default function Combat({ onExit }: CombatProps) {
+  const { character, updateCharacter, markCharacterAsDead, reviveCharacter } =
+    useCharacter();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [combatManager, setCombatManager] = useState<CombatManager | null>(null);
   const [showVictory, setShowVictory] = useState(false);
   const [showDefeat, setShowDefeat] = useState(false);
-  const [rewards, setRewards] = useState<{
-    gold: number;
-    experience: number;
-    floor: number;
-  }>({ gold: 0, experience: 0, floor: 1 });
+  const [rewards, setRewards] = useState({
+    gold: 0,
+    experience: 0,
+    floor: 1,
+  });
   const [userCrystals, setUserCrystals] = useState(0);
-  const [defeatedEnemies, setDefeatedEnemies] = useState<Enemy[]>([]);
-  const router = useRouter();
   const [showRoomSelection, setShowRoomSelection] = useState(false);
   const [availableRooms, setAvailableRooms] = useState<RoomType[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserCrystals = async () => {
@@ -51,104 +59,52 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
         console.error("Failed to fetch user crystals:", error);
       }
     };
+
     fetchUserCrystals();
   }, []);
 
   useEffect(() => {
     if (!character) return;
 
-    // Initialize game state with enhanced character
-    const enhancedCharacter: Character = {
-      ...character,
-      equipment: character.equipment || [],
-      powers: character.powers || [],
-      block: 0,
-      deck: [],
-      hand: [],
-      discardPile: [],
-    };
-
-    const gameManager = new GameManager(enhancedCharacter);
-    const initialGameState = gameManager.getState();
-
-    // Create an enemy for the current floor
+    const initialGameState = createGameState(character);
     const enemy = EnemyManager.createEnemy(initialGameState.floor);
-
-    // Initialize combat manager
     const combat = new CombatManager(initialGameState, [enemy]);
 
     setGameState(initialGameState);
     setEnemies([enemy]);
     setCombatManager(combat);
-  }, [character?.id]); // Only re-run when character ID changes
-
-  useEffect(() => {
-    if (gameState?.status === "VICTORY") {
-      setDefeatedEnemies((prev) => [...prev, ...enemies]);
-    }
-  }, [gameState?.status, enemies]);
+  }, [character?.id]);
 
   if (!character) return null;
 
-  const handleVictory = async () => {
-    if (!character || !gameState) return;
-
+  const handleVictory = async (
+    resolvedGameState: GameState,
+    defeatedEnemies: Enemy[]
+  ) => {
     try {
-      // Calculate rewards with fixed base values
-      const goldReward = Math.floor(Math.random() * 10) + 5;
+      const combatRewards = calculateCombatRewards(
+        defeatedEnemies,
+        resolvedGameState.floor
+      );
 
-      // Calculate experience reward based on enemy type and floor level
-      let expReward = 0;
-      defeatedEnemies.forEach((enemy) => {
-        const floorMultiplier = Math.max(1, Math.floor(gameState.floor / 5));
-        if (enemy.isBoss) {
-          expReward += 50 * floorMultiplier;
-        } else if (enemy.isElite) {
-          expReward += 25 * floorMultiplier;
-        } else {
-          expReward += 10 * floorMultiplier;
-        }
-      });
-
-      // Ensure minimum experience reward
-      expReward = Math.max(10, expReward);
-
-      // Calculate new values
-      const newGold = character.gold + goldReward;
-      const newExp = character.experience + expReward;
-      const currentMonstersSlain = character.monstersSlain || 0;
-      const newMonstersSlain = currentMonstersSlain + enemies.length; // Use enemies.length instead of defeatedEnemies
-
-      // Log the values for debugging
-      console.log("Updating character stats:", {
-        currentMonstersSlain,
-        newMonstersSlain,
-        enemiesDefeated: enemies.length,
-      });
-
-      // Update character stats
       const updatedCharacter = await updateCharacter(character.id, {
-        gold: newGold,
-        experience: newExp,
-        currentHealth: Math.max(1, gameState.character.currentHealth),
-        monstersSlain: newMonstersSlain,
-        floor: gameState.floor, // Make sure to include the current floor
+        gold: character.gold + combatRewards.gold,
+        experience: character.experience + combatRewards.experience,
+        currentHealth: Math.max(1, resolvedGameState.character.currentHealth),
+        monstersSlain:
+          (character.monstersSlain || 0) + combatRewards.monstersSlain,
+        floor: resolvedGameState.floor,
       });
 
       if (!updatedCharacter) {
         throw new Error("Failed to update character stats");
       }
 
-      // Clear defeated enemies for next combat
-      setDefeatedEnemies([]);
-
-      // Update the rewards display
       setRewards({
-        gold: goldReward,
-        experience: expReward,
-        floor: gameState.floor,
+        gold: combatRewards.gold,
+        experience: combatRewards.experience,
+        floor: resolvedGameState.floor,
       });
-
       setShowVictory(true);
     } catch (error) {
       console.error("Failed to update character:", error);
@@ -165,29 +121,25 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
     }
   };
 
+  const initializeBattle = (nextGameState: GameState) => {
+    const enemy = EnemyManager.createEnemy(nextGameState.floor);
+    const combat = new CombatManager(nextGameState, [enemy]);
+
+    setGameState(nextGameState);
+    setEnemies([enemy]);
+    setCombatManager(combat);
+  };
+
   const handleRevive = async () => {
     try {
       await reviveCharacter(character.id);
-
-      // Reset game state
-      const enhancedCharacter = {
+      const revivedState = createGameState({
         ...character,
         currentHealth: character.maxHealth,
         isDead: false,
-      };
+      });
 
-      const gameManager = new GameManager(enhancedCharacter);
-      const initialGameState = gameManager.getState();
-
-      // Create a new enemy for the current floor
-      const enemy = EnemyManager.createEnemy(initialGameState.floor);
-
-      // Initialize combat manager
-      const combat = new CombatManager(initialGameState, [enemy]);
-
-      setGameState(initialGameState);
-      setEnemies([enemy]);
-      setCombatManager(combat);
+      initializeBattle(revivedState);
       setShowDefeat(false);
     } catch (error) {
       console.error("Failed to revive character:", error);
@@ -195,29 +147,27 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
   };
 
   const handleNextFloor = async () => {
-    if (!character || !gameState) return;
+    if (!gameState) return;
 
-    // Clear defeated enemies for next combat
-    setDefeatedEnemies([]);
-
-    const nextFloor = (gameState.floor || 1) + 1;
+    const nextFloor = gameState.floor + 1;
 
     try {
-      await updateCharacter(character.id, {
-        floor: nextFloor,
-      });
+      await updateCharacter(character.id, { floor: nextFloor });
 
-      // Special case: force rest site every 5 floors
       if (nextFloor % 5 === 0) {
         router.push(`/dashboard/game/${character.id}/rest`);
         return;
       }
 
-      // Generate 2 random unique room options
-      const possibleRooms = [RoomType.BATTLE, RoomType.REST, RoomType.SHOP, RoomType.EVENT];
-      const numberOfChoices = 2; // Changed from 3 to 2
-      const shuffledRooms = [...possibleRooms].sort(() => Math.random() - 0.5);
-      const selectedRooms = shuffledRooms.slice(0, numberOfChoices);
+      const possibleRooms = [
+        RoomType.BATTLE,
+        RoomType.REST,
+        RoomType.SHOP,
+        RoomType.EVENT,
+      ];
+      const selectedRooms = [...possibleRooms]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2);
 
       setAvailableRooms(selectedRooms);
       setShowRoomSelection(true);
@@ -230,99 +180,68 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
   const handleRoomSelection = (selectedRoom: RoomType) => {
     setShowRoomSelection(false);
 
-    switch (selectedRoom) {
-      case RoomType.REST:
-        router.push(`/dashboard/game/${character.id}/rest`);
-        break;
-      case RoomType.SHOP:
-        router.push(`/dashboard/game/${character.id}/shop`);
-        break;
-      case RoomType.EVENT:
-        router.push(`/dashboard/game/${character.id}/event`);
-        break;
-      case RoomType.BATTLE:
-        // Initialize game state with enhanced character for next floor
-        const enhancedCharacter: Character = {
-          ...character,
-          equipment: character.equipment || [],
-          powers: character.powers || [],
-          block: 0,
-          deck: [],
-          hand: [],
-          discardPile: [],
-        };
-
-        const gameManager = new GameManager(enhancedCharacter);
-        const initialGameState = gameManager.getState();
-        initialGameState.floor = (gameState?.floor || 1) + 1;
-
-        setGameState(initialGameState);
-        setShowVictory(false);
-        initializeBattle(initialGameState);
-        break;
+    if (selectedRoom === RoomType.REST) {
+      router.push(`/dashboard/game/${character.id}/rest`);
+      return;
     }
+
+    if (selectedRoom === RoomType.SHOP) {
+      router.push(`/dashboard/game/${character.id}/shop`);
+      return;
+    }
+
+    if (selectedRoom === RoomType.EVENT) {
+      router.push(`/dashboard/game/${character.id}/event`);
+      return;
+    }
+
+    const nextFloor = (gameState?.floor || character.floor || 1) + 1;
+    const nextGameState = createGameState(character, nextFloor);
+    setShowVictory(false);
+    initializeBattle(nextGameState);
   };
 
-  const initializeBattle = (gameState: GameState) => {
-    // Create a new enemy for the current floor
-    const enemy = EnemyManager.createEnemy(gameState.floor);
-
-    // Initialize combat manager
-    const combat = new CombatManager(gameState, [enemy]);
-
-    setEnemies([enemy]);
-    setCombatManager(combat);
-  };
-
-  const handleCardClick = (index: number) => {
+  const handleCardClick = async (index: number) => {
     if (!gameState || !combatManager) return;
 
     const card = gameState.hand[index];
-    if (card.energy > gameState.currentEnergy) return; // Can't play if not enough energy
+    if (!card || card.energy > gameState.currentEnergy) return;
 
-    // For now, we'll assume single target cards always target the first enemy
-    const targetIndex = 0;
+    if (!combatManager.playCard(index, 0)) return;
 
-    if (combatManager.playCard(index, targetIndex)) {
-      const updatedGameState = { ...combatManager.getState() };
-      const updatedEnemies = [...combatManager.getCombatState().enemies];
-      
-      setGameState(updatedGameState);
-      setEnemies(updatedEnemies);
+    const updatedGameState = combatManager.getState();
+    const updatedCombatState = combatManager.getCombatState();
 
-      // Check for victory condition after playing a card
-      if (updatedEnemies.every(enemy => enemy.currentHealth <= 0)) {
-        setDefeatedEnemies(updatedEnemies);
-        handleVictory();
-      }
+    setGameState(updatedGameState);
+    setEnemies(updatedCombatState.enemies);
+
+    if (updatedGameState.status === "VICTORY") {
+      await handleVictory(
+        updatedGameState,
+        updatedCombatState.defeatedEnemies
+      );
     }
   };
 
-  const handleEndTurn = () => {
-    if (!combatManager || !gameState) return;
+  const handleEndTurn = async () => {
+    if (!combatManager || !combatManager.endTurn()) return;
 
-    // Process enemy actions
-    combatManager.processEnemyTurn();
-
-    // Move all cards from hand to discard pile
-    combatManager.endTurn();
-
-    // Update both states
     const updatedGameState = combatManager.getState();
-    const updatedEnemies = [...combatManager.getCombatState().enemies];
-    
-    setGameState({ ...updatedGameState });
-    setEnemies(updatedEnemies);
+    const updatedCombatState = combatManager.getCombatState();
 
-    // Check game status
+    setGameState(updatedGameState);
+    setEnemies(updatedCombatState.enemies);
+
     if (updatedGameState.status === "DEFEAT") {
-      handleCombatDefeat();
+      await handleCombatDefeat();
     }
   };
 
   const getHealthBarColor = (percentage: number) => {
     if (percentage > 66) return "bg-gradient-to-r from-red-600 to-red-500";
-    if (percentage > 33) return "bg-gradient-to-r from-yellow-600 to-yellow-500";
+    if (percentage > 33) {
+      return "bg-gradient-to-r from-yellow-600 to-yellow-500";
+    }
     return "bg-gradient-to-r from-red-800 to-red-700";
   };
 
@@ -333,56 +252,50 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="container mx-auto px-2 md:px-4">
-        <div className="relative min-h-[calc(100vh-4rem)] md:h-[calc(100vh-12rem)] w-full pb-[280px] md:pb-32">
-          {/* Enemy Area */}
-          <div className="flex flex-wrap justify-center gap-4 md:gap-4 p-4 md:p-8 mb-[100px]">
-            {enemies.map((enemy, index) => (
+        <div className="relative min-h-[calc(100vh-4rem)] w-full pb-[280px] md:h-[calc(100vh-12rem)] md:pb-32">
+          <div className="mb-[100px] flex flex-wrap justify-center gap-4 p-4 md:p-8">
+            {enemies.map((enemy) => (
               <div
                 key={enemy.id}
-                className="relative w-full max-w-xs p-2 bg-gradient-to-b from-gray-500 to-gray-700 rounded-xl border border-gray-700 shadow-lg overflow-hidden pb-4"
+                className="relative w-full max-w-xs overflow-hidden rounded-xl border border-gray-700 bg-gradient-to-b from-gray-500 to-gray-700 p-2 pb-4 shadow-lg"
               >
-                <div className="flex justify-between items-center text-lg md:text-xl font-bold mb-2 text-white">
+                <div className="mb-2 flex items-center justify-between text-lg font-bold text-white md:text-xl">
                   <span>{enemy.name}</span>
-                  <span className="bg-gray-700/50 rounded-full p-1.5">
+                  <span className="rounded-full bg-gray-700/50 p-1.5">
                     <Skull className="h-5 w-5 text-red-400" />
                   </span>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="pt-4 pb-2">
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-sm font-medium text-white">HP</span>
-                      <span className="text-sm font-medium text-white">
-                        {enemy.currentHealth}/{enemy.maxHealth}
-                      </span>
-                    </div>
-                    <div className="h-3 bg-gray-700/60 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 rounded-full ${getHealthBarColor(
-                          (enemy.currentHealth / enemy.maxHealth) * 100
-                        )}`}
-                        style={{
-                          width: `${(enemy.currentHealth / enemy.maxHealth) * 100}%`,
-                        }}
-                      />
-                    </div>
+                <div className="pt-4 pb-2">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="text-sm font-medium text-white">HP</span>
+                    <span className="text-sm font-medium text-white">
+                      {enemy.currentHealth}/{enemy.maxHealth}
+                    </span>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-gray-700/60">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${getHealthBarColor(
+                        (enemy.currentHealth / enemy.maxHealth) * 100
+                      )}`}
+                      style={{
+                        width: `${(enemy.currentHealth / enemy.maxHealth) * 100}%`,
+                      }}
+                    />
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Bottom UI Container */}
-          <div className="fixed bottom-0 left-0 right-0 z-10">
-            {/* Character Stats Panel */}
-            <div className="px-2 md:px-4 mb-2">
+          <div className="fixed right-0 bottom-0 left-0 z-10">
+            <div className="mb-2 px-2 md:px-4">
               <CharacterStats gameState={gameState} />
             </div>
 
-            {/* Hand Area */}
-            <div className="h-36 md:h-48 bg-gradient-to-t from-gray-900/20 to-transparent">
-              <div className="p-2 md:p-4 overflow-x-auto pb-2 hide-scrollbar h-full">
-                <div className="flex gap-2 md:gap-3 min-w-min justify-start md:justify-center h-full">
+            <div className="h-36 bg-gradient-to-t from-gray-900/20 to-transparent md:h-48">
+              <div className="hide-scrollbar h-full overflow-x-auto p-2 pb-2 md:p-4">
+                <div className="flex h-full min-w-min justify-start gap-2 md:justify-center md:gap-3">
                   {gameState.hand.map((card, index) => (
                     <Card
                       key={`${card.id}-${index}`}
@@ -395,20 +308,17 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
                 </div>
               </div>
 
-              {/* Button Container */}
-              <div className="absolute bottom-2 md:bottom-4 left-0 right-0 flex justify-between px-2 md:px-4">
-                {/* Exit Button */}
+              <div className="absolute right-0 bottom-2 left-0 flex justify-between px-2 md:bottom-4 md:px-4">
                 <button
                   onClick={onExit}
-                  className="px-3 md:px-4 py-1.5 md:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm md:text-base transition-colors duration-200"
+                  className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition-colors duration-200 hover:bg-red-700 md:px-4 md:py-2 md:text-base"
                 >
                   Exit Game
                 </button>
 
-                {/* End Turn Button */}
                 <button
                   onClick={handleEndTurn}
-                  className="px-4 md:px-6 py-2 md:py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medievalsharp text-base md:text-lg shadow-lg transition-all duration-200 hover:shadow-xl"
+                  className="bg-primary hover:bg-primary-dark rounded-lg px-4 py-2 font-medievalsharp text-base text-white shadow-lg transition-all duration-200 hover:shadow-xl md:px-6 md:py-3 md:text-lg"
                 >
                   End Turn
                 </button>
@@ -416,7 +326,6 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
             </div>
           </div>
 
-          {/* Add this CSS to your global styles */}
           <style jsx global>{`
             .hide-scrollbar {
               -ms-overflow-style: none;
@@ -429,28 +338,25 @@ export default function Combat({ onCombatEnd, onExit }: CombatProps) {
 
           <GameModal
             isOpen={showVictory}
-            onClose={() => {
-              setShowVictory(false);
-              onCombatEnd();
-            }}
+            onClose={() => setShowVictory(false)}
             type="victory"
-            rewards={{
-              gold: rewards.gold,
-              experience: rewards.experience,
-              floor: gameState?.floor || 1,
-            }}
+            rewards={rewards}
             onNextFloor={handleNextFloor}
           />
           <GameModal
             isOpen={showDefeat}
-            onClose={() => {
-              setShowDefeat(false);
-              onCombatEnd();
-            }}
+            onClose={() => setShowDefeat(false)}
             type="defeat"
             onRevive={handleRevive}
             crystalCost={100}
             userCrystals={userCrystals}
+          />
+          <RoomSelectionModal
+            isOpen={showRoomSelection}
+            onClose={() => setShowRoomSelection(false)}
+            onSelectRoom={handleRoomSelection}
+            availableRooms={availableRooms}
+            currentFloor={gameState.floor}
           />
         </div>
       </div>

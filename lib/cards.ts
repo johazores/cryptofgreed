@@ -12,7 +12,7 @@ export type Card = {
   };
 };
 
-type FightingStyle = "MELEE" | "RANGE" | "MAGIC";
+export type FightingStyle = "MELEE" | "RANGE" | "MAGIC";
 
 export function getStarterDeck(fightingStyle: FightingStyle): Card[] {
   const basicStrikes = Array(4).fill({
