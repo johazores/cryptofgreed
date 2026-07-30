@@ -1,20 +1,62 @@
 # Crypt of Greed
 
-Crypt of Greed is an early browser-based prototype for a turn-based deckbuilding roguelite. The current goal is to validate a premium, offline-first game centered on a clear **bank-or-risk Greed mechanic** before expanding content or committing to a production engine.
+Crypt of Greed is an early browser-based prototype for a turn-based deckbuilding roguelite. The product direction is a premium, offline-first game built around one defining decision: **bank accumulated treasure safely or carry it deeper for greater rewards and greater risk**.
 
-The repository is not a release-ready Steam or console build. The product audit and source-of-truth plans are available in:
+> **Status:** pre-alpha gameplay prototype. This repository is not a release-ready Steam or console build.
 
-- `PROJECT_REVIEW.md`
-- `GAME_DESIGN_DOCUMENT.md`
-- `GAMEPLAY_ANALYSIS.md`
-- `UI_UX_AUDIT.md`
-- `TECHNICAL_REVIEW.md`
-- `IMPLEMENTATION_ROADMAP.md`
-- `STEAM_READINESS.md`
-- `CONSOLE_READINESS.md`
-- `MONETIZATION_STRATEGY.md`
+## Current Prototype
 
-## Current Technology
+The current application includes:
+
+- credential-based accounts and character persistence;
+- three character fighting styles;
+- starter decks and turn-based card combat;
+- enemy intent, health, energy, block, rewards, and floor progression;
+- battle, rest, merchant, and event rooms;
+- deterministic room choices and merchant inventory;
+- normal non-NFT equipment that affects combat cards;
+- responsive gameplay, dashboard, onboarding, and account interfaces;
+- isolated tests for core gameplay rules.
+
+The next major product milestone is a versioned `RunState` with persistent decks, card rewards, Hoard, Greed, banking, extraction choices, and resumable checkpoints.
+
+## Documentation
+
+Start with the [documentation index](docs/README.md).
+
+Key source-of-truth documents:
+
+- [Project review](docs/product/project-review.md)
+- [Game design document](docs/product/game-design-document.md)
+- [Gameplay analysis](docs/product/gameplay-analysis.md)
+- [Monetization strategy](docs/product/monetization-strategy.md)
+- [UI and UX audit](docs/design/ui-ux-audit.md)
+- [Technical review](docs/engineering/technical-review.md)
+- [Implementation roadmap](docs/engineering/implementation-roadmap.md)
+- [Repository structure](docs/engineering/repository-structure.md)
+- [Steam readiness](docs/platform/steam-readiness.md)
+- [Console readiness](docs/platform/console-readiness.md)
+
+See [CHANGELOG.md](CHANGELOG.md) for notable repository changes.
+
+## Repository Structure
+
+```text
+app/          Next.js pages, layouts, and route handlers
+components/   React components grouped by product responsibility
+context/      Cross-screen client state providers
+lib/          Shared services, utilities, and gameplay rules
+prisma/       MongoDB schema and Prisma configuration
+public/       Static assets
+tests/        Automated domain tests
+types/        Shared TypeScript types
+docs/         Product, design, engineering, and platform documentation
+.github/      Pull request and issue templates
+```
+
+Detailed placement rules are documented in [repository-structure.md](docs/engineering/repository-structure.md).
+
+## Technology
 
 - Next.js 15
 - React 19
@@ -24,39 +66,35 @@ The repository is not a release-ready Steam or console build. The product audit 
 - Prisma with MongoDB
 - Node.js built-in test runner
 
-Custodial wallets and NFT custody are disabled. New accounts do not receive blockchain wallets or stored private keys.
+## Local Setup
 
-## Requirements
+Requirements:
 
 - Node.js 22
 - npm
 - MongoDB connection string
 
-## Local Setup
-
-1. Install dependencies:
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-2. Create `.env.local`:
+Create `.env.local`:
 
-```bash
+```text
 DATABASE_URL=
 NEXTAUTH_SECRET=
 NEXTAUTH_URL=http://localhost:3000
 ```
 
-3. Synchronize the development schema:
+Synchronize the development schema:
 
 ```bash
 npx prisma db push
 ```
 
-This step makes legacy wallet fields optional and allows normal non-NFT equipment records.
-
-4. Start development:
+Start the application:
 
 ```bash
 npm run dev
@@ -64,7 +102,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Validation Commands
+## Validation
 
 ```bash
 npm test
@@ -72,64 +110,43 @@ npm run typecheck
 npm run build
 ```
 
-The current game suite covers combat turns, rewards, revival, seeded shuffling, floor progression, room choices, shop inventory, equipment combat bonuses, and character-creation rules.
+The isolated suite covers combat turns, block timing, rewards, revival, seeded shuffling, room progression, merchant inventory, equipment bonuses, and character-creation rules.
 
-## Verified Core Rules
+## Security and Legacy Web3 Status
 
-- persisted character floors initialize battle correctly
-- opening combat draws one hand
-- ending a turn resolves one enemy phase
-- player block absorbs damage before resetting
-- defeated enemies remain available for rewards
-- room choices are unique and floor progression is centralized
-- every fifth floor forces a rest room
-- shop inventory is deterministic for the current floor
-- shop purchases are authenticated and deduct gold atomically
-- one equipment item is stored per slot
-- weapon and defensive equipment improve relevant cards
-- revival cost and ownership are enforced by the server
-- character names and fighting styles are normalized and validated server-side
-- starter characters use normal game equipment without NFT references
+Custodial wallet creation and NFT custody are disabled.
 
-## UI and UX Improvements
+- New accounts do not receive blockchain wallets.
+- New private keys are not generated or stored.
+- NFT custody endpoints return disabled responses.
+- Remaining wallet and NFT files are legacy migration material and are not part of the active product direction.
+- Existing legacy private-key records require a separate reviewed migration and deletion plan before production deployment.
 
-### Gameplay rooms
+Report sensitive findings through the process in [SECURITY.md](SECURITY.md). Never include credentials, private keys, tokens, or personal data in public issues.
 
-- responsive dark-fantasy game shell across combat, rest, shop, and event rooms
-- one centralized room-selection flow instead of duplicate combat navigation
-- accessible card buttons with keyboard focus and disabled states
-- visible enemy intent, health, block, turn, floor, energy, and reward information
-- clearer loading, error, empty, purchase, and insufficient-resource states
-- dialogs support Escape behavior, focus, ARIA labels, and safer non-dismissible decisions
-- event choices show their cost and outcome before commitment
-- mobile combat no longer relies on a large fixed overlay covering the battlefield
+## Contributing
 
-### Dashboard and onboarding
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
-- responsive dashboard with roster totals, ready-character count, deepest floor, and crystal balance
-- skeleton loading and a visible retry state instead of a blank full-screen spinner
-- multiple characters can be created without reloading the application
-- semantic fighting-style selection with a recommended first class and readable strengths
-- richer character cards show floor, level, health, experience, gold, kills, and equipment count
-- revive and creation actions expose their own loading and insufficient-resource states
-- responsive desktop and mobile navigation with active-page indicators
-- simplified account menu with only working dashboard, settings, and sign-out actions
-- authentication explains that registration creates no wallet or private key
-- profile changes update the active authentication session without browser-storage synchronization
-- text inputs expose helper and error relationships to assistive technology
+Repository expectations:
+
+- use focused feature, fix, refactor, or documentation branches;
+- use Conventional Commits;
+- prefer multiple meaningful commits over one mixed commit;
+- keep implementation simple and documentation accurate;
+- do not add wallet, NFT, cryptocurrency, or custodial-key features;
+- do not modify GitHub Actions without a separate workflow and cost audit.
+
+Participation is governed by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Known Limitations
 
-- the full deck and route history do not yet persist as one versioned run
-- Greed, Hoard, banking, extraction, relics, card rewards, and deck upgrades are not implemented
-- content remains limited to a small starter card and enemy set
-- equipment bonuses are intentionally simple and need balancing
-- no controller mapping layer, audio system, native desktop build, localization, achievements, or cloud saves exist
-- existing legacy private-key records still require a reviewed one-time migration and deletion plan
-- a clean production build requires configured local services and installed dependencies
+- No authoritative persistent run model yet.
+- No Greed, Hoard, banking, extraction, card rewards, or deck upgrades yet.
+- Content is limited to a small starter card and enemy set.
+- No controller mapping, audio system, native desktop build, localization, achievements, or cloud saves.
+- A clean production build requires configured local services and installed dependencies.
 
-## Branch and Commit Rules
+## License
 
-- feature branches use `feat/<feature-name>`
-- commits follow Conventional Commits
-- do not add or modify GitHub Actions during the current stabilization phase
+No open-source license has been declared yet. Until the repository owner adds one, the source remains all rights reserved by default and public visibility alone does not grant reuse rights.
